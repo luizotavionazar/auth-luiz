@@ -1,0 +1,34 @@
+package br.com.luizotavionazar.authluiz.api.autenticacao.dto;
+
+import br.com.luizotavionazar.authluiz.domain.autenticacao.entity.PoliticaSenha;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+public record CadastroRequest(
+        @NotBlank(message = "Nome é obrigatório")
+        @Size(min = 3, max = 100, message = "O nome deve ter entre 3 e 100 caracteres")
+        String nome,
+
+        @NotBlank(message = "E-mail é obrigatório")
+        @Email(message = "E-mail inválido")
+        @Size(max = 255, message = "O e-mail deve ter no máximo 255 caracteres")
+        String email,
+
+        @NotBlank(message = "Senha é obrigatória")
+        @Size(
+                min = PoliticaSenha.MIN_CARACTERES,
+                max = PoliticaSenha.MAX_CARACTERES,
+                message = "A senha deve ter entre " + PoliticaSenha.MIN_CARACTERES
+                        + " e " + PoliticaSenha.MAX_CARACTERES + " caracteres"
+        )
+        String senha
+) {
+    public String emailNormalizado() {
+        return email == null ? null : email.trim().toLowerCase();
+    }
+
+    public String nomeNormalizado() {
+        return nome == null ? null : nome.trim();
+    }
+}

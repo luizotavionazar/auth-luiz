@@ -1,0 +1,23 @@
+package br.com.luizotavionazar.authluiz.api.autenticacao.dto;
+
+import br.com.luizotavionazar.authluiz.domain.usuario.entity.Usuario;
+
+import java.time.LocalDateTime;
+
+public record ContaResponse(
+        Integer idUsuario,
+        String nome,
+        String email,
+        LocalDateTime dataCriacao,
+        LocalDateTime dataAtualiza
+) {
+    public static ContaResponse from(Usuario usuario) {
+        return new ContaResponse(
+                usuario.getId(),
+                usuario.getNome(),
+                usuario.getEmail(),
+                usuario.getDataCriacao(),
+                usuario.getDataAtualiza()
+        );
+    }
+}
