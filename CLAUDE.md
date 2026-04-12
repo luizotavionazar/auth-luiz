@@ -110,6 +110,18 @@ Consulte `backend/.env.example`. Variáveis obrigatórias:
 - `JWT_EXPIRATION_MINUTES` — padrão: 120
 - `GOOGLE_OAUTH_CLIENT_ID` — client ID do Google OAuth
 
+## Frontend como Implementação de Referência
+
+O frontend incluído neste repositório é uma **implementação de referência** — serve para demonstrar o uso da API, mas o backend foi projetado para ser reutilizável com qualquer frontend. Ao implementar funcionalidades:
+
+- O backend é independente de qualquer frontend específico.
+- O frontend que o desenvolvedor implementar pode exibir suas próprias mensagens com base nos status HTTP e na estrutura de resposta da API — não é obrigado a usar as mensagens retornadas pelo backend.
+- Regras de negócio e validações devem residir no backend; a camada de apresentação fica a cargo de cada frontend.
+
+## Centralização de Mensagens e Validações
+
+Mensagens de erro, textos de validação e lógicas de verificação repetidas devem ser definidas em um único local — seja como constantes, funções ou métodos reutilizáveis — para que alterações futuras exijam mudança em apenas um ponto. Evite duplicar tanto strings quanto sequências de passos ou regras de verificação em múltiplos locais do projeto.
+
 ## Fluxo de Trabalho com Claude
 
 - As tarefas são trabalhadas uma por vez, do início ao fim.

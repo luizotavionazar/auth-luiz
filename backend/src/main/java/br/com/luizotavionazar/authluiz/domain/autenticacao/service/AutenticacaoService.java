@@ -52,6 +52,8 @@ public class AutenticacaoService {
     private static final int LIMITE_TENTATIVAS_IP = 5;
     private static final long BLOQUEIO_IP_MINUTES = 2;
 
+    static final String MSG_CREDENCIAIS_INVALIDAS = "E-mail ou senha incorretos!";
+
     @Transactional
     public CadastroResponse cadastrar(CadastroRequest request) {
         String emailNormalizado = request.emailNormalizado();
@@ -74,15 +76,14 @@ public class AutenticacaoService {
         String emailNormalizado = request.emailNormalizado();
 
         Usuario usuario = usuarioRepository.findByEmail(emailNormalizado)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "E-mail ou senha incorretos!"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, MSG_CREDENCIAIS_INVALIDAS));
 
         if (!usuario.possuiSenhaLocal()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Esta conta não possui senha local cadastrada. Entre com Google ou defina uma senha local.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, MSG_CREDENCIAIS_INVALIDAS);
         }
 
         if (!passwordEncoder.matches(request.senha(), usuario.getSenhaHash())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "E-mail ou senha incorretos!");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, MSG_CREDENCIAIS_INVALIDAS);
         }
 
         String token = jwtService.gerarToken(usuario);
