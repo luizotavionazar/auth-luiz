@@ -5,6 +5,7 @@ import br.com.luizotavionazar.authluiz.api.autenticacao.dto.MensagemResponse;
 import br.com.luizotavionazar.authluiz.api.conta.dto.AtualizarEmailRequest;
 import br.com.luizotavionazar.authluiz.api.conta.dto.AtualizarNomeRequest;
 import br.com.luizotavionazar.authluiz.api.conta.dto.AtualizarSenhaRequest;
+import br.com.luizotavionazar.authluiz.api.conta.dto.DeletarContaRequest;
 import br.com.luizotavionazar.authluiz.domain.autenticacao.repository.TokenRecuperacaoSenhaRepository;
 import br.com.luizotavionazar.authluiz.domain.autenticacao.service.PoliticaSenhaService;
 import br.com.luizotavionazar.authluiz.domain.identidadeexterna.entity.ProviderExterno;
@@ -97,6 +98,23 @@ public class ContaService {
         usuarioRepository.save(usuario);
         tokenRecuperacaoSenhaRepository.encerrarTokensAbertosDoUsuario(usuario.getId(), LocalDateTime.now());
         return new MensagemResponse("Senha local definida com sucesso!");
+    }
+
+    @Transactional
+    public void deletarConta(Integer idUsuario, DeletarContaRequest request) {
+        Usuario usuario = buscarUsuario(idUsuario);
+
+        if (usuario.possuiSenhaLocal()) {
+            String senha = request != null ? request.senha() : null;
+            if (senha == null || senha.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe a senha para confirmar a exclusão da conta.");
+            }
+            if (!passwordEncoder.matches(senha, usuario.getSenhaHash())) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Senha incorreta.");
+            }
+        }
+
+        usuarioRepository.delete(usuario);
     }
 
     private Usuario buscarUsuario(Integer idUsuario) {

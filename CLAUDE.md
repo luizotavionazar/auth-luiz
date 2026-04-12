@@ -88,17 +88,22 @@ docker compose up --build
 
 ### Resumo dos Endpoints da API
 
-| Método | Caminho | Autenticação |
-|--------|---------|--------------|
-| POST | `/auth/cadastro` | Pública |
-| POST | `/auth/login` | Pública |
-| POST | `/auth/oauth/google` | Pública |
-| POST | `/auth/recuperacao/iniciar` | Pública |
-| GET | `/auth/recuperacao/validar` | Pública |
-| POST | `/auth/recuperacao/redefinir` | Pública |
-| GET | `/auth/me` | JWT |
-| PATCH | `/auth/me/nome` `/email` `/senha` | JWT |
-| GET/POST | `/setup/**` | Chave mestra |
+Manter esta tabela sempre atualizada ao criar, editar ou remover endpoints durante o desenvolvimento.
+
+| Método | Caminho | Autenticação | Descrição |
+|--------|---------|--------------|-----------|
+| POST | `/auth/cadastro` | Pública | Cadastro de novo usuário |
+| POST | `/auth/login` | Pública | Login com e-mail e senha |
+| POST | `/auth/oauth/google` | Pública | Login/cadastro via Google |
+| POST | `/auth/recuperacao/iniciar` | Pública | Inicia recuperação de senha por e-mail |
+| GET | `/auth/recuperacao/validar` | Pública | Valida token de recuperação |
+| POST | `/auth/recuperacao/redefinir` | Pública | Redefine senha com token válido |
+| GET | `/auth/me` | JWT | Retorna dados da conta autenticada |
+| PATCH | `/auth/me/nome` | JWT | Atualiza nome do usuário |
+| PATCH | `/auth/me/email` | JWT | Atualiza e-mail (bloqueado para contas com Google vinculado) |
+| PATCH | `/auth/me/senha` | JWT | Atualiza ou define senha local |
+| DELETE | `/auth/me` | JWT | Exclui a conta do usuário autenticado |
+| GET/POST | `/setup/**` | Chave mestra | Configuração inicial da aplicação |
 
 ## Variáveis de Ambiente
 
@@ -118,6 +123,10 @@ O frontend incluído neste repositório é uma **implementação de referência*
 - O frontend que o desenvolvedor implementar pode exibir suas próprias mensagens com base nos status HTTP e na estrutura de resposta da API — não é obrigado a usar as mensagens retornadas pelo backend.
 - Regras de negócio e validações devem residir no backend; a camada de apresentação fica a cargo de cada frontend.
 
+## Integridade Referencial com Usuário
+
+As tabelas `tokenRecuperacaoSenha` e `identidadeExterna` possuem `ON DELETE CASCADE` na FK para `usuario`. Se no futuro forem criadas novas tabelas com FK para `usuario`, garantir que também tenham `ON DELETE CASCADE` para que a deleção do usuário continue funcionando sem erros de integridade referencial.
+
 ## Centralização de Mensagens e Validações
 
 Mensagens de erro, textos de validação e lógicas de verificação repetidas devem ser definidas em um único local — seja como constantes, funções ou métodos reutilizáveis — para que alterações futuras exijam mudança em apenas um ponto. Evite duplicar tanto strings quanto sequências de passos ou regras de verificação em múltiplos locais do projeto.
@@ -125,6 +134,10 @@ Mensagens de erro, textos de validação e lógicas de verificação repetidas d
 ## Testes de API
 
 O usuário utiliza o **API Dog** para testar o backend. Quando solicitado, forneça roteiros de teste detalhados com método, URL, headers, body e resultado esperado para cada cenário (sucesso e erro).
+
+## Manutenção do CLAUDE.md
+
+Durante o desenvolvimento, manter este arquivo sempre atualizado com qualquer informação relevante para o entendimento futuro do projeto: novos endpoints, mudanças de arquitetura, regras de negócio, convenções adotadas, decisões técnicas e restrições. O objetivo é que este arquivo seja sempre uma fonte confiável de contexto.
 
 ## Fluxo de Trabalho com Claude
 

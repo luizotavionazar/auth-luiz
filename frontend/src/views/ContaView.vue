@@ -132,6 +132,12 @@
                           <i :class="mostrarNovaSenha ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
                         </button>
                       </div>
+                      <ul v-if="mostrarRegrasSenha" class="list-unstyled small mt-1 mb-0">
+                        <li :class="senhaRegras.tamanho ? 'text-success' : 'text-danger'">{{ senhaRegras.tamanho ? '✓' : '✕' }} Pelo menos 8 caracteres</li>
+                        <li :class="senhaRegras.maiuscula ? 'text-success' : 'text-danger'">{{ senhaRegras.maiuscula ? '✓' : '✕' }} Pelo menos 1 letra maiúscula</li>
+                        <li :class="senhaRegras.numero ? 'text-success' : 'text-danger'">{{ senhaRegras.numero ? '✓' : '✕' }} Pelo menos 1 número</li>
+                        <li :class="senhaRegras.especial ? 'text-success' : 'text-danger'">{{ senhaRegras.especial ? '✓' : '✕' }} Pelo menos 1 caractere especial</li>
+                      </ul>
                     </div>
 
                     <div :class="conta.temSenhaLocal ? 'col-lg-4' : 'col-lg-6'">
@@ -142,18 +148,10 @@
                           <i :class="mostrarConfirmacao ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
                         </button>
                       </div>
+                      <div v-if="mostrarValidacaoConfirmacao" class="small mt-1" :class="senhasCoincidem ? 'text-success' : 'text-danger'">
+                        {{ senhasCoincidem ? '✓ As senhas coincidem' : '✕ As senhas não coincidem' }}
+                      </div>
                     </div>
-                  </div>
-
-                  <ul v-if="mostrarRegrasSenha" class="list-unstyled small mt-3 mb-0">
-                    <li :class="senhaRegras.tamanho ? 'text-success' : 'text-danger'">{{ senhaRegras.tamanho ? '✓' : '✕' }} Pelo menos 8 caracteres</li>
-                    <li :class="senhaRegras.maiuscula ? 'text-success' : 'text-danger'">{{ senhaRegras.maiuscula ? '✓' : '✕' }} Pelo menos 1 letra maiúscula</li>
-                    <li :class="senhaRegras.numero ? 'text-success' : 'text-danger'">{{ senhaRegras.numero ? '✓' : '✕' }} Pelo menos 1 número</li>
-                    <li :class="senhaRegras.especial ? 'text-success' : 'text-danger'">{{ senhaRegras.especial ? '✓' : '✕' }} Pelo menos 1 caractere especial</li>
-                  </ul>
-
-                  <div v-if="mostrarValidacaoConfirmacao" class="small mt-2" :class="senhasCoincidem ? 'text-success' : 'text-danger'">
-                    {{ senhasCoincidem ? '✓ As senhas coincidem' : '✕ As senhas não coincidem' }}
                   </div>
 
                   <div v-if="mensagemSenha" class="alert alert-success py-2 small mt-3">{{ mensagemSenha }}</div>
@@ -171,7 +169,72 @@
             </div>
           </div>
         </div>
+        <div class="text-end mt-4">
+          <button class="btn btn-outline-danger btn-sm" @click="abrirModalExclusao">
+            Excluir conta
+          </button>
+        </div>
       </template>
+    </div>
+  </div>
+
+  <!-- Modal de confirmação de exclusão -->
+  <div v-if="modalExclusaoVisivel" class="modal-overlay d-flex align-items-center justify-content-center" @click.self="fecharModalExclusao">
+    <div class="card shadow border-0 rounded-4" style="width: 100%; max-width: 460px;">
+      <div class="card-body p-4">
+        <h2 class="h5 fw-bold mb-1">Excluir conta</h2>
+        <p class="text-muted small mb-4">Esta ação é permanente e não pode ser desfeita.</p>
+
+        <div class="alert alert-warning rounded-3 small mb-4" role="alert">
+          <p class="fw-semibold mb-2">Antes de continuar, leia com atenção:</p>
+          <p :class="conta.temSenhaLocal ? 'mb-0' : 'mb-2'">
+            Ao excluir sua conta, <strong>todos os seus dados serão removidos permanentemente</strong> dos nossos servidores — sem possibilidade de recuperação.
+          </p>
+          <p v-if="!conta.temSenhaLocal" class="mb-0">
+            Se você entrar com o Google novamente, uma <strong>conta completamente nova</strong> será criada do zero, sem nenhum vínculo, histórico ou configuração da conta atual.
+          </p>
+        </div>
+
+        <template v-if="conta.temSenhaLocal">
+          <div class="mb-4">
+            <label class="form-label">Para confirmar, informe sua senha atual:</label>
+            <div class="position-relative">
+              <input
+                v-model="senhaExclusao"
+                :type="mostrarSenhaExclusao ? 'text' : 'password'"
+                class="form-control pe-5 campo-senha"
+                placeholder="Digite sua senha"
+                @keyup.enter="confirmarExclusao"
+              />
+              <button type="button" class="btn btn-sm border-0 bg-transparent position-absolute top-50 end-0 translate-middle-y me-2 text-muted" @click="mostrarSenhaExclusao = !mostrarSenhaExclusao" :aria-label="mostrarSenhaExclusao ? 'Ocultar senha' : 'Mostrar senha'">
+                <i :class="mostrarSenhaExclusao ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+              </button>
+            </div>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" id="checkLeuExclusao" v-model="confirmouLeitura" />
+            <label class="form-check-label small" for="checkLeuExclusao">
+              Li e compreendi as consequências da exclusão da minha conta.
+            </label>
+          </div>
+        </template>
+
+        <div v-if="erroExclusao" class="alert alert-danger py-2 small mb-3">{{ erroExclusao }}</div>
+
+        <div class="d-flex gap-2 justify-content-end">
+          <button class="btn btn-outline-secondary" @click="fecharModalExclusao" :disabled="excluindo">Cancelar</button>
+          <button
+            class="btn btn-danger"
+            @click="confirmarExclusao"
+            :disabled="excluindo || (conta.temSenhaLocal ? !senhaExclusao : !confirmouLeitura)"
+          >
+            {{ excluindo ? 'Excluindo...' : 'Excluir conta' }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -185,6 +248,7 @@ import {
   atualizarMinhaSenha,
   atualizarSessaoComConta,
   buscarMinhaConta,
+  deletarMinhaConta,
   logout,
   marcarSenhaLocalNaSessao
 } from '../services/autenticacaoService'
@@ -209,6 +273,13 @@ const mensagemSenha = ref('')
 const erroNome = ref('')
 const erroEmail = ref('')
 const erroSenha = ref('')
+
+const modalExclusaoVisivel = ref(false)
+const senhaExclusao = ref('')
+const mostrarSenhaExclusao = ref(false)
+const confirmouLeitura = ref(false)
+const excluindo = ref(false)
+const erroExclusao = ref('')
 
 const senhaEmFoco = ref(false)
 const confirmacaoEmFoco = ref(false)
@@ -344,8 +415,45 @@ async function salvarSenha() {
   }
 }
 
+function abrirModalExclusao() {
+  senhaExclusao.value = ''
+  mostrarSenhaExclusao.value = false
+  confirmouLeitura.value = false
+  erroExclusao.value = ''
+  modalExclusaoVisivel.value = true
+}
+
+function fecharModalExclusao() {
+  modalExclusaoVisivel.value = false
+}
+
+async function confirmarExclusao() {
+  erroExclusao.value = ''
+  excluindo.value = true
+
+  try {
+    await deletarMinhaConta(conta.value.temSenhaLocal ? { senha: senhaExclusao.value } : null)
+    logout()
+    router.push('/login')
+  } catch (e) {
+    erroExclusao.value = extrairMensagemErro(e, 'Não foi possível excluir a conta.')
+  } finally {
+    excluindo.value = false
+  }
+}
+
 onMounted(async () => {
   limparMensagens()
   await carregarConta()
 })
 </script>
+
+<style scoped>
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1050;
+  padding: 1rem;
+}
+</style>

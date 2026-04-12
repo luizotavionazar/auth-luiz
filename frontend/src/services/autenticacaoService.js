@@ -156,6 +156,16 @@ export function logout() {
   }
 }
 
+export async function deletarMinhaConta(dados) {
+  const response = await authApi.delete('/auth/me', {
+    headers: {
+      Authorization: `Bearer ${getToken()}`
+    },
+    data: dados
+  })
+  return response.data
+}
+
 export async function iniciarRecuperacaoSenha(dados) {
   const response = await authApi.post('/auth/recuperacao/iniciar', dados)
   return response.data

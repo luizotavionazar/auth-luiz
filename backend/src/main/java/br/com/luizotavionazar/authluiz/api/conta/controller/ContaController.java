@@ -5,12 +5,14 @@ import br.com.luizotavionazar.authluiz.api.autenticacao.dto.MensagemResponse;
 import br.com.luizotavionazar.authluiz.api.conta.dto.AtualizarEmailRequest;
 import br.com.luizotavionazar.authluiz.api.conta.dto.AtualizarNomeRequest;
 import br.com.luizotavionazar.authluiz.api.conta.dto.AtualizarSenhaRequest;
+import br.com.luizotavionazar.authluiz.api.conta.dto.DeletarContaRequest;
 import br.com.luizotavionazar.authluiz.domain.usuario.service.ContaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -55,5 +57,15 @@ public class ContaController {
     ) {
         Integer idUsuario = Integer.valueOf(jwt.getSubject());
         return ResponseEntity.ok(contaService.atualizarSenha(idUsuario, request));
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deletarConta(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestBody(required = false) DeletarContaRequest request
+    ) {
+        Integer idUsuario = Integer.valueOf(jwt.getSubject());
+        contaService.deletarConta(idUsuario, request);
+        return ResponseEntity.noContent().build();
     }
 }
