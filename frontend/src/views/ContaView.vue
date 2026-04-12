@@ -70,7 +70,7 @@
             </div>
           </div>
 
-          <div class="col-lg-6">
+          <div v-if="!conta.temLoginGoogle" class="col-lg-6">
             <div class="card shadow border-0 rounded-4 h-100">
               <div class="card-body p-4">
                 <h2 class="h5 mb-3">Alterar e-mail</h2>

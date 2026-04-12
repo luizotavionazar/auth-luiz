@@ -122,6 +122,10 @@ O frontend incluído neste repositório é uma **implementação de referência*
 
 Mensagens de erro, textos de validação e lógicas de verificação repetidas devem ser definidas em um único local — seja como constantes, funções ou métodos reutilizáveis — para que alterações futuras exijam mudança em apenas um ponto. Evite duplicar tanto strings quanto sequências de passos ou regras de verificação em múltiplos locais do projeto.
 
+## Testes de API
+
+O usuário utiliza o **API Dog** para testar o backend. Quando solicitado, forneça roteiros de teste detalhados com método, URL, headers, body e resultado esperado para cada cenário (sucesso e erro).
+
 ## Fluxo de Trabalho com Claude
 
 - As tarefas são trabalhadas uma por vez, do início ao fim.

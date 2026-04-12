@@ -49,6 +49,13 @@ public class ContaService {
     @Transactional
     public ContaResponse atualizarEmail(Integer idUsuario, AtualizarEmailRequest request) {
         Usuario usuario = buscarUsuario(idUsuario);
+
+        boolean temLoginGoogle = identidadeExternaRepository.existsByUsuarioIdAndProvider(usuario.getId(), ProviderExterno.GOOGLE);
+        if (temLoginGoogle) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Contas vinculadas ao Google não podem alterar o e-mail.");
+        }
+
         String emailNormalizado = request.emailNormalizado();
 
         if (usuarioRepository.existsByEmailAndIdNot(emailNormalizado, usuario.getId())) {
@@ -57,7 +64,6 @@ public class ContaService {
 
         usuario.setEmail(emailNormalizado);
         usuarioRepository.save(usuario);
-        boolean temLoginGoogle = identidadeExternaRepository.existsByUsuarioIdAndProvider(usuario.getId(), ProviderExterno.GOOGLE);
         return ContaResponse.from(usuario, temLoginGoogle);
     }
 
