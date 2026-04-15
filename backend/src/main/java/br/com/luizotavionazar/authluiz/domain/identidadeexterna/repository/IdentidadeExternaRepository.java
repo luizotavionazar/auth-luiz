@@ -11,4 +11,6 @@ public interface IdentidadeExternaRepository extends JpaRepository<IdentidadeExt
     Optional<IdentidadeExterna> findByProviderAndProviderUserId(ProviderExterno provider, String providerUserId);
 
     boolean existsByUsuarioIdAndProvider(Integer idUsuario, ProviderExterno provider);
+
+    void deleteByUsuarioIdAndProvider(Integer idUsuario, ProviderExterno provider);
 }

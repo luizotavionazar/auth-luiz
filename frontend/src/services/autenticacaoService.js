@@ -10,8 +10,6 @@ const TOKEN_KEY = 'authluiz_token'
 const USER_KEY = 'authluiz_user'
 const EXPIRES_AT_KEY = 'authluiz_expires_at'
 
-const PENDING_GOOGLE_LINK_KEY = 'authluiz_pending_google_link'
-
 export async function cadastrar(dados) {
   const response = await authApi.post('/auth/cadastro', dados)
   return response.data
@@ -24,6 +22,25 @@ export async function login(dados) {
 
 export async function loginComGoogle(dados) {
   const response = await authApi.post('/auth/oauth/google', dados)
+  return response.data
+}
+
+export async function vincularGoogle(dados) {
+  const response = await authApi.post('/auth/oauth/google/vincular', dados, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`
+    }
+  })
+  return response.data
+}
+
+export async function desvincularGoogle(dados) {
+  const response = await authApi.delete('/auth/oauth/google/vincular', {
+    headers: {
+      Authorization: `Bearer ${getToken()}`
+    },
+    data: dados
+  })
   return response.data
 }
 
@@ -98,32 +115,6 @@ export function marcarSenhaLocalNaSessao() {
     ...usuarioAtual,
     temSenhaLocal: true
   }))
-}
-
-
-export function salvarPendenciaVinculoGoogle(idToken) {
-  if (!idToken) return
-  sessionStorage.setItem(PENDING_GOOGLE_LINK_KEY, JSON.stringify({
-    idToken,
-    criadoEm: Date.now()
-  }))
-}
-
-export function obterPendenciaVinculoGoogle() {
-  const raw = sessionStorage.getItem(PENDING_GOOGLE_LINK_KEY)
-  if (!raw) return null
-
-  try {
-    const data = JSON.parse(raw)
-    if (!data?.idToken) return null
-    return data
-  } catch {
-    return null
-  }
-}
-
-export function limparPendenciaVinculoGoogle() {
-  sessionStorage.removeItem(PENDING_GOOGLE_LINK_KEY)
 }
 
 export function getToken() {

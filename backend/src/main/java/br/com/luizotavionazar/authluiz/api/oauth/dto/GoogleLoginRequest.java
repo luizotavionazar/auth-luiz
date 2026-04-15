@@ -4,13 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 
 public record GoogleLoginRequest(
         @NotBlank(message = "O idToken do Google é obrigatório")
-        String idToken,
-
-        Boolean vincularContaExistente,
-
-        String senhaContaExistente
+        String idToken
 ) {
-    public boolean desejaVincularContaExistente() {
-        return Boolean.TRUE.equals(vincularContaExistente);
-    }
 }

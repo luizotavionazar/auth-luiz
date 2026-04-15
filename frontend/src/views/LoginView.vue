@@ -59,7 +59,7 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { login, loginComGoogle, limparPendenciaVinculoGoogle, salvarPendenciaVinculoGoogle, salvarSessao } from '../services/autenticacaoService'
+import { login, loginComGoogle, salvarSessao } from '../services/autenticacaoService'
 import { cancelarOneTap, exibirOneTap, getGoogleClientId, renderizarBotaoGoogle } from '../services/googleIdentityService'
 import { extrairMensagemErro } from '../utils/extrairMensagemErro'
 
@@ -101,32 +101,16 @@ async function fazerLogin() {
   }
 }
 
-function erroEhDeVinculoOpcional(error) {
-  const status = error?.response?.status
-  const texto = error?.response?.data?.mensagem || ''
-  return status === 409 && texto.includes('Já existe uma conta com este e-mail')
-}
-
 async function autenticarComGoogle(idToken) {
   googleMensagem.value = ''
   googleCarregando.value = true
 
   try {
-    const resposta = await loginComGoogle({
-      idToken,
-      vincularContaExistente: false
-    })
-
-    limparPendenciaVinculoGoogle()
+    const resposta = await loginComGoogle({ idToken })
     salvarSessao(resposta)
     redirecionarConta()
   } catch (e) {
-    if (erroEhDeVinculoOpcional(e)) {
-      salvarPendenciaVinculoGoogle(idToken)
-      await router.push('/login/google/vincular')
-    } else {
-      googleMensagem.value = extrairMensagemErro(e, 'Não foi possível entrar com Google.')
-    }
+    googleMensagem.value = extrairMensagemErro(e, 'Não foi possível entrar com Google.')
     console.error(e)
   } finally {
     googleCarregando.value = false
@@ -144,7 +128,6 @@ async function onGoogleCredentialResponse(response) {
 
 async function iniciarGoogle() {
   googleIndisponivel.value = ''
-  limparPendenciaVinculoGoogle()
 
   try {
     if (!getGoogleClientId()) {

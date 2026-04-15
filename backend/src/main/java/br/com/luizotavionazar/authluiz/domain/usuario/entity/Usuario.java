@@ -1,5 +1,6 @@
 package br.com.luizotavionazar.authluiz.domain.usuario.entity;
 
+import br.com.luizotavionazar.authluiz.domain.identidadeexterna.entity.ProviderExterno;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -51,6 +52,10 @@ public class Usuario implements UserDetails {
 
     @Column(name = "emailPendente", length = 255)
     private String emailPendente;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "providerOrigem", length = 50)
+    private ProviderExterno providerOrigem;
 
     public boolean possuiSenhaLocal() {
         return senhaHash != null && !senhaHash.isBlank();

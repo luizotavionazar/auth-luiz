@@ -1,6 +1,8 @@
 package br.com.luizotavionazar.authluiz.domain.identidadeexterna.service;
 
+import br.com.luizotavionazar.authluiz.api.autenticacao.dto.ContaResponse;
 import br.com.luizotavionazar.authluiz.api.autenticacao.dto.LoginResponse;
+import br.com.luizotavionazar.authluiz.api.oauth.dto.DesvincularGoogleRequest;
 import br.com.luizotavionazar.authluiz.api.oauth.dto.GoogleLoginRequest;
 import br.com.luizotavionazar.authluiz.config.security.JwtService;
 import br.com.luizotavionazar.authluiz.domain.identidadeexterna.entity.IdentidadeExterna;
@@ -10,6 +12,7 @@ import br.com.luizotavionazar.authluiz.domain.usuario.entity.Usuario;
 import br.com.luizotavionazar.authluiz.domain.usuario.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +25,7 @@ public class GoogleAuthService {
     private final UsuarioRepository usuarioRepository;
     private final IdentidadeExternaRepository identidadeExternaRepository;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
     private final GoogleIdTokenValidatorService googleIdTokenValidatorService;
 
     @Transactional
@@ -37,9 +41,9 @@ public class GoogleAuthService {
             return gerarRespostaLogin(identidadeExistente.getUsuario());
         }
 
-        Usuario usuarioExistente = usuarioRepository.findByEmail(googleUsuario.emailNormalizado()).orElse(null);
-        if (usuarioExistente != null) {
-            return vincularContaExistenteOuFalhar(request, googleUsuario, usuarioExistente);
+        if (usuarioRepository.existsByEmail(googleUsuario.emailNormalizado())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Já existe uma conta com este e-mail. Faça login com sua senha e vincule a conta Google posteriormente.");
         }
 
         if (!googleUsuario.emailVerificado()) {
@@ -51,29 +55,73 @@ public class GoogleAuthService {
                 .nome(googleUsuario.nomeNormalizado())
                 .email(googleUsuario.emailNormalizado())
                 .senhaHash(null)
+                .providerOrigem(ProviderExterno.GOOGLE)
                 .build());
 
         criarVinculoGoogle(novoUsuario, googleUsuario);
         return gerarRespostaLogin(novoUsuario);
     }
 
-    private LoginResponse vincularContaExistenteOuFalhar(
-            GoogleLoginRequest request,
-            GoogleUsuarioInfo googleUsuario,
-            Usuario usuarioExistente
-    ) {
-        if (!googleUsuario.emailVerificado()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Já existe uma conta com este e-mail, mas o Google não informou o e-mail como verificado. Faça login com sua senha para vincular depois!");
+    @Transactional
+    public ContaResponse vincular(Integer idUsuario, GoogleLoginRequest request) {
+        Jwt googleJwt = googleIdTokenValidatorService.validar(request.idToken());
+        GoogleUsuarioInfo googleUsuario = extrairUsuario(googleJwt);
+
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conta não encontrada!"));
+
+        if (!googleUsuario.emailNormalizado().equals(usuario.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "O e-mail da conta Google deve ser igual ao e-mail da sua conta.");
         }
 
-        if (!request.desejaVincularContaExistente()) {
+        if (identidadeExternaRepository.existsByUsuarioIdAndProvider(idUsuario, ProviderExterno.GOOGLE)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Já existe uma conta com este e-mail. Confirme se deseja entrar com Google e vincular essa conta.");
+                    "Esta conta já está vinculada ao Google.");
         }
 
-        criarVinculoGoogle(usuarioExistente, googleUsuario);
-        return gerarRespostaLogin(usuarioExistente);
+        if (identidadeExternaRepository.findByProviderAndProviderUserId(ProviderExterno.GOOGLE, googleUsuario.providerUserId()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Esta conta Google já está vinculada a outra conta.");
+        }
+
+        criarVinculoGoogle(usuario, googleUsuario);
+        return ContaResponse.from(usuario, true);
+    }
+
+    @Transactional
+    public ContaResponse desvincular(Integer idUsuario, DesvincularGoogleRequest request) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conta não encontrada!"));
+
+        if (!identidadeExternaRepository.existsByUsuarioIdAndProvider(idUsuario, ProviderExterno.GOOGLE)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Esta conta não está vinculada ao Google.");
+        }
+
+        if (ProviderExterno.GOOGLE.equals(usuario.getProviderOrigem())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Esta conta foi criada com Google e não pode ser desvinculada.");
+        }
+
+        if (!usuario.possuiSenhaLocal()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Defina uma senha local antes de desvincular o Google para não perder o acesso à conta.");
+        }
+
+        String senha = request != null ? request.senha() : null;
+        if (senha == null || senha.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Informe a senha para confirmar a desvinculação.");
+        }
+
+        if (!passwordEncoder.matches(senha, usuario.getSenhaHash())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "Senha incorreta.");
+        }
+
+        identidadeExternaRepository.deleteByUsuarioIdAndProvider(idUsuario, ProviderExterno.GOOGLE);
+        return ContaResponse.from(usuario, false);
     }
 
     private void criarVinculoGoogle(Usuario usuario, GoogleUsuarioInfo googleUsuario) {

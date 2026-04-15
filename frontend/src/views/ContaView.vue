@@ -107,6 +107,40 @@
             </div>
           </div>
 
+          <div v-if="conta.providerOrigem !== 'GOOGLE'" class="col-12">
+            <div class="card shadow border-0 rounded-4">
+              <div class="card-body p-4">
+                <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
+                  <div>
+                    <h2 class="h5 mb-2">Google</h2>
+                    <p class="text-muted mb-0 small">
+                      {{ conta.temLoginGoogle
+                        ? 'Sua conta está vinculada ao Google. Você pode entrar com seu e-mail Google.'
+                        : 'Vincule sua conta do Google para poder entrar sem senha.' }}
+                    </p>
+                  </div>
+                </div>
+
+                <template v-if="conta.temLoginGoogle">
+                  <div v-if="mensagemGoogle" class="alert alert-success py-2 small mb-3">{{ mensagemGoogle }}</div>
+                  <div v-if="erroGoogle" class="alert alert-danger py-2 small mb-3">{{ erroGoogle }}</div>
+                  <div class="d-grid d-lg-flex justify-content-lg-end">
+                    <button class="btn btn-outline-danger" @click="abrirModalDesvinculoGoogle">
+                      Desvincular Google
+                    </button>
+                  </div>
+                </template>
+
+                <template v-else>
+                  <div v-if="mensagemGoogle" class="alert alert-success py-2 small mb-3">{{ mensagemGoogle }}</div>
+                  <div v-if="erroGoogle" class="alert alert-danger py-2 small mb-3">{{ erroGoogle }}</div>
+                  <div ref="googleVincularButtonRef" class="google-button-host"></div>
+                  <div v-if="googleVincularIndisponivel" class="alert alert-warning py-2 small mt-2">{{ googleVincularIndisponivel }}</div>
+                </template>
+              </div>
+            </div>
+          </div>
+
           <div class="col-12">
             <div class="card shadow border-0 rounded-4">
               <div class="card-body p-4">
@@ -193,7 +227,7 @@
   </div>
 
   <!-- Modal de confirmação de exclusão -->
-  <div v-if="modalExclusaoVisivel" class="modal-overlay d-flex align-items-center justify-content-center" @click.self="fecharModalExclusao">
+  <div v-if="modalExclusaoVisivel" class="modal-overlay d-flex align-items-center justify-content-center">
     <div class="card shadow border-0 rounded-4" style="width: 100%; max-width: 460px;">
       <div class="card-body p-4">
         <h2 class="h5 fw-bold mb-1">Excluir conta</h2>
@@ -251,10 +285,49 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal de confirmação de desvinculação do Google -->
+  <div v-if="modalDesvinculoGoogleVisivel" class="modal-overlay d-flex align-items-center justify-content-center">
+    <div class="card shadow border-0 rounded-4" style="width: 100%; max-width: 460px;">
+      <div class="card-body p-4">
+        <h2 class="h5 fw-bold mb-1">Desvincular Google</h2>
+        <p class="text-muted small mb-4">Você não conseguirá mais entrar com o Google após a desvinculação.</p>
+
+        <div class="mb-4">
+          <label class="form-label">Para confirmar, informe sua senha atual:</label>
+          <div class="position-relative">
+            <input
+              v-model="senhaDesvinculoGoogle"
+              :type="mostrarSenhaDesvinculoGoogle ? 'text' : 'password'"
+              class="form-control pe-5 campo-senha"
+              placeholder="Digite sua senha"
+              @keyup.enter="desvinculaGoogle"
+            />
+            <button type="button" class="btn btn-sm border-0 bg-transparent position-absolute top-50 end-0 translate-middle-y me-2 text-muted" @click="mostrarSenhaDesvinculoGoogle = !mostrarSenhaDesvinculoGoogle" :aria-label="mostrarSenhaDesvinculoGoogle ? 'Ocultar senha' : 'Mostrar senha'">
+              <i :class="mostrarSenhaDesvinculoGoogle ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="erroDesvinculoGoogle" class="alert alert-danger py-2 small mb-3">{{ erroDesvinculoGoogle }}</div>
+
+        <div class="d-flex gap-2 justify-content-end">
+          <button class="btn btn-outline-secondary" @click="fecharModalDesvinculoGoogle" :disabled="desvinculandoGoogle">Cancelar</button>
+          <button
+            class="btn btn-danger"
+            @click="desvinculaGoogle"
+            :disabled="desvinculandoGoogle || !senhaDesvinculoGoogle"
+          >
+            {{ desvinculandoGoogle ? 'Desvinculando...' : 'Desvincular Google' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   atualizarMeuEmail,
@@ -263,10 +336,13 @@ import {
   atualizarSessaoComConta,
   buscarMinhaConta,
   deletarMinhaConta,
+  desvincularGoogle,
   logout,
   marcarSenhaLocalNaSessao,
-  reenviarVerificacao
+  reenviarVerificacao,
+  vincularGoogle
 } from '../services/autenticacaoService'
+import { getGoogleClientId, renderizarBotaoGoogle } from '../services/googleIdentityService'
 import { extrairMensagemErro } from '../utils/extrairMensagemErro'
 
 const router = useRouter()
@@ -290,6 +366,16 @@ const erroEmail = ref('')
 const erroSenha = ref('')
 
 const reenviando = ref(false)
+
+const googleVincularButtonRef = ref(null)
+const mensagemGoogle = ref('')
+const erroGoogle = ref('')
+const desvinculandoGoogle = ref(false)
+const googleVincularIndisponivel = ref('')
+const modalDesvinculoGoogleVisivel = ref(false)
+const senhaDesvinculoGoogle = ref('')
+const mostrarSenhaDesvinculoGoogle = ref(false)
+const erroDesvinculoGoogle = ref('')
 
 const modalExclusaoVisivel = ref(false)
 const senhaExclusao = ref('')
@@ -475,6 +561,82 @@ async function confirmarExclusao() {
     excluindo.value = false
   }
 }
+
+async function iniciarGoogleVincular() {
+  googleVincularIndisponivel.value = ''
+
+  if (!getGoogleClientId()) {
+    googleVincularIndisponivel.value = 'Defina VITE_GOOGLE_CLIENT_ID no frontend para habilitar a vinculação com Google.'
+    return
+  }
+
+  try {
+    await nextTick()
+    await renderizarBotaoGoogle(googleVincularButtonRef.value, onGoogleVincularCredential)
+  } catch (e) {
+    googleVincularIndisponivel.value = e.message || 'Não foi possível carregar o botão do Google.'
+    console.error(e)
+  }
+}
+
+async function onGoogleVincularCredential(response) {
+  if (!response?.credential) {
+    erroGoogle.value = 'O Google não retornou um idToken válido.'
+    return
+  }
+
+  mensagemGoogle.value = ''
+  erroGoogle.value = ''
+
+  try {
+    conta.value = await vincularGoogle({ idToken: response.credential })
+    atualizarSessaoComConta(conta.value)
+    mensagemGoogle.value = 'Google vinculado com sucesso!'
+  } catch (e) {
+    erroGoogle.value = extrairMensagemErro(e, 'Não foi possível vincular o Google.')
+    console.error(e)
+  }
+}
+
+function abrirModalDesvinculoGoogle() {
+  senhaDesvinculoGoogle.value = ''
+  mostrarSenhaDesvinculoGoogle.value = false
+  erroDesvinculoGoogle.value = ''
+  modalDesvinculoGoogleVisivel.value = true
+}
+
+function fecharModalDesvinculoGoogle() {
+  modalDesvinculoGoogleVisivel.value = false
+  senhaDesvinculoGoogle.value = ''
+  erroDesvinculoGoogle.value = ''
+}
+
+async function desvinculaGoogle() {
+  erroDesvinculoGoogle.value = ''
+  desvinculandoGoogle.value = true
+
+  try {
+    conta.value = await desvincularGoogle({ senha: senhaDesvinculoGoogle.value })
+    atualizarSessaoComConta(conta.value)
+    modalDesvinculoGoogleVisivel.value = false
+    senhaDesvinculoGoogle.value = ''
+    mensagemGoogle.value = 'Google desvinculado com sucesso!'
+    await iniciarGoogleVincular()
+  } catch (e) {
+    erroDesvinculoGoogle.value = extrairMensagemErro(e, 'Não foi possível desvincular o Google.')
+    console.error(e)
+  } finally {
+    desvinculandoGoogle.value = false
+  }
+}
+
+// Renderiza o botão do Google sempre que o elemento de vínculo aparecer no DOM
+// (ocorre após a conta ser carregada sem Google vinculado, ou após um desvínculo)
+watch(googleVincularButtonRef, async (el) => {
+  if (el && conta.value && !conta.value.temLoginGoogle) {
+    await iniciarGoogleVincular()
+  }
+})
 
 onMounted(async () => {
   limparMensagens()

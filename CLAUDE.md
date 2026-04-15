@@ -71,7 +71,7 @@ docker compose up --build
 - **Guarda de setup:** `SetupFilter` intercepta todas as requisições (exceto `/setup/**`) e redireciona para o setup se `configuracaoAplicacao.setupConcluido = false`. O setup é concluído via `POST /setup` usando `APP_SETUP_MASTER_KEY`.
 - **Autenticação:** Spring Security é stateless (sem sessões). O JWT é emitido pelo `JwtService` no login; todos os endpoints protegidos o validam via OAuth2 resource server (`spring-boot-starter-security-oauth2-resource-server`). O CORS está fixo para `http://localhost:5173`.
 - **Recuperação de senha:** Limitada por IP via `ControleRecuperacaoSenha`. Os tokens são hasheados antes de serem armazenados (`TokenRecuperacaoSenha`). A limpeza de tokens expirados é feita pelo `TokenRecuperacaoSenhaExpiracaoService`.
-- **Google OAuth:** O frontend obtém um Google ID token via Google Identity Services SDK; o backend valida (`GoogleIdTokenValidatorService`/`GoogleAudienceValidator`) e emite seu próprio JWT. Uma identidade Google pode ser vinculada a uma conta existente de e-mail/senha.
+- **Google OAuth:** O frontend obtém um Google ID token via Google Identity Services SDK; o backend valida (`GoogleIdTokenValidatorService`/`GoogleAudienceValidator`) e emite seu próprio JWT. O vínculo com Google é gerenciado na tela de conta (`POST /auth/oauth/google/vincular` e `DELETE /auth/oauth/google/vincular`); o login com Google nunca vincula automaticamente — retorna 409 se o e-mail já existe. Vinculação exige que o e-mail do Google seja idêntico ao da conta. Desvinculação exige senha local definida e confirmação por senha via modal. **Contas criadas via Google (`providerOrigem = GOOGLE`) não podem ser desvinculadas**; o campo `providerOrigem` (nullable `ProviderExterno` enum) no `Usuario` registra qual provider originou o cadastro — null indica e-mail/senha, valor preenchido indica OAuth. Esse campo é extensível para futuros providers (Apple, GitHub, etc.).
 - **Configuração de e-mail:** As credenciais SMTP ficam criptografadas na tabela `configuracaoAplicacao` via `CriptografiaConfiguracaoService` (BouncyCastle). O `EmailService` as lê em tempo de execução.
 - **Confirmação de e-mail (feature flag):** Controlada por `configuracaoAplicacao.confirmacaoEmailHabilitada`. Quando ativa: cadastro gera token de verificação (7 dias), usuário não confirmado não pode alterar senha, contas expiradas são removidas a cada hora pelo `ConfirmacaoEmailExpiracaoService` (`@Scheduled`). A **alteração de e-mail sempre exige confirmação**, independente da flag — usa `emailPendente` + token (30 min); o e-mail só é trocado após o clique no link. Rate limiting de alteração de e-mail por usuário via `ControleAlteracaoEmail` (máx. 5 por 1440 min, bloqueio de 1440 min). Cooldown de reenvio: 2 minutos (mesmo mecanismo do `TokenConfirmacaoService`). Tokens são hasheados via `TokenUtils.gerarHash()` antes de armazenar. `@EnableScheduling` está ativo na `AuthLuizApplication`.
 
@@ -84,7 +84,7 @@ docker compose up --build
 - `services/api.js` — Instância Axios com injeção do token Bearer e logout automático em respostas 401.
 - `services/autenticacaoService.js` — Utilitários de armazenamento e verificação de expiração do token.
 - `router/index.js` — Guards: redireciona para `/setup` se o setup não estiver concluído; exige autenticação nas rotas com `requiresAuth`; redireciona usuários autenticados para longe do login/cadastro.
-- `views/` — Um Vue SFC por página (`Login`, `Cadastro`, `Conta`, `RecuperarSenha`, `RedefinirSenha`, `Setup`, `VincularContaGoogle`, `VerificacaoEmail`).
+- `views/` — Um Vue SFC por página (`Login`, `Cadastro`, `Conta`, `RecuperarSenha`, `RedefinirSenha`, `Setup`, `VerificacaoEmail`).
 - Interface usa Bootstrap 5 + Bootstrap Icons.
 
 ### Resumo dos Endpoints da API
@@ -95,7 +95,9 @@ Manter esta tabela sempre atualizada ao criar, editar ou remover endpoints duran
 |--------|---------|--------------|-----------|
 | POST | `/auth/cadastro` | Pública | Cadastro de novo usuário |
 | POST | `/auth/login` | Pública | Login com e-mail e senha |
-| POST | `/auth/oauth/google` | Pública | Login/cadastro via Google |
+| POST | `/auth/oauth/google` | Pública | Login/cadastro via Google (retorna 409 se já existe conta com o e-mail — vincular via conta) |
+| POST | `/auth/oauth/google/vincular` | JWT | Vincula Google à conta autenticada (e-mail do Google deve ser igual ao da conta) |
+| DELETE | `/auth/oauth/google/vincular` | JWT | Desvincula Google da conta (exige senha local definida para não perder o acesso) |
 | POST | `/auth/recuperacao/iniciar` | Pública | Inicia recuperação de senha por e-mail |
 | GET | `/auth/recuperacao/validar` | Pública | Valida token de recuperação |
 | POST | `/auth/recuperacao/redefinir` | Pública | Redefine senha com token válido |

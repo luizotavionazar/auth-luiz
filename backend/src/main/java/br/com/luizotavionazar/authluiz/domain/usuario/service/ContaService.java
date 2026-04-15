@@ -45,9 +45,16 @@ public class ContaService {
     private final ControleAlteracaoEmailRepository controleAlteracaoEmailRepository;
     private final EmailService emailService;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ContaResponse obterMinhaConta(Integer idUsuario) {
         Usuario usuario = buscarUsuario(idUsuario);
+
+        if (usuario.getEmailPendente() != null
+                && !tokenConfirmacaoService.temTokenAtivo(idUsuario, TipoTokenConfirmacao.ALTERACAO_EMAIL)) {
+            usuarioRepository.atualizarEmailPendente(idUsuario, null);
+            usuario.setEmailPendente(null);
+        }
+
         boolean temLoginGoogle = identidadeExternaRepository.existsByUsuarioIdAndProvider(usuario.getId(), ProviderExterno.GOOGLE);
         return ContaResponse.from(usuario, temLoginGoogle);
     }
@@ -91,8 +98,8 @@ public class ContaService {
 
         validarLimiteAlteracaoEmail(idUsuario);
 
-        usuario.setEmailPendente(emailNormalizado);
-        usuarioRepository.save(usuario);
+        usuarioRepository.atualizarEmailPendente(usuario.getId(), emailNormalizado);
+        usuario.setEmailPendente(emailNormalizado); // apenas para o DTO da resposta, entidade já desanexada
 
         String token = tokenConfirmacaoService.criarTokenAlteracaoEmail(usuario, emailNormalizado, ip);
         emailService.enviarConfirmacaoAlteracaoEmail(usuario.getNome(), emailNormalizado, token);
