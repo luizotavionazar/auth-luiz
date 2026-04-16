@@ -4,7 +4,7 @@
       <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
           <h1 class="h3 fw-bold mb-1">Minha conta</h1>
-          <p class="text-muted mb-0">Gerencie seus dados, suas formas de acesso e a senha local da AuthLuiz.</p>
+          <p class="text-muted mb-0">Gerencie seus dados, suas formas de acesso e a senha da AuthLuiz.</p>
         </div>
         <button class="btn btn-outline-danger align-self-start align-self-md-center" @click="sair">Sair</button>
       </div>
@@ -39,7 +39,7 @@
               <div class="d-flex flex-wrap gap-2 align-content-start">
                 <span class="badge rounded-pill text-bg-primary-subtle text-primary-emphasis border">ID {{ conta.idUsuario }}</span>
                 <span class="badge rounded-pill" :class="conta.temSenhaLocal ? 'text-bg-success-subtle text-success-emphasis border' : 'text-bg-warning-subtle text-warning-emphasis border'">
-                  {{ conta.temSenhaLocal ? 'Senha local ativa' : 'Sem senha local' }}
+                  {{ conta.temSenhaLocal ? 'Senha ativa' : 'Sem senha' }}
                 </span>
                 <span class="badge rounded-pill" :class="conta.temLoginGoogle ? 'text-bg-success-subtle text-success-emphasis border' : 'text-bg-secondary-subtle text-secondary-emphasis border'">
                   {{ conta.temLoginGoogle ? 'Google vinculado' : 'Google não vinculado' }}
@@ -146,17 +146,17 @@
               <div class="card-body p-4">
                 <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
                   <div>
-                    <h2 class="h5 mb-2">{{ conta.temSenhaLocal ? 'Trocar senha local' : 'Definir senha local' }}</h2>
+                    <h2 class="h5 mb-2">{{ conta.temSenhaLocal ? 'Trocar senha' : 'Definir senha' }}</h2>
                     <p class="text-muted mb-0 small">
                       {{ conta.temSenhaLocal
                         ? 'Informe a senha atual e escolha uma nova senha.'
-                        : 'Sua conta foi criada sem senha local. Defina uma senha para também poder entrar por e-mail.' }}
+                        : 'Sua conta foi criada sem senha. Defina uma senha para também poder entrar por e-mail.' }}
                     </p>
                   </div>
 
                   <div class="small text-muted">
                     <div><strong>Login com Google:</strong> {{ conta.temLoginGoogle ? 'Ativo' : 'Não vinculado' }}</div>
-                    <div><strong>Senha local:</strong> {{ conta.temSenhaLocal ? 'Configurada' : 'Ainda não definida' }}</div>
+                    <div><strong>Senha:</strong> {{ conta.temSenhaLocal ? 'Configurada' : 'Ainda não definida' }}</div>
                   </div>
                 </div>
 
@@ -209,7 +209,7 @@
                     <button class="btn btn-primary" :disabled="salvandoSenha">
                       {{ salvandoSenha
                         ? (conta.temSenhaLocal ? 'Alterando...' : 'Definindo...')
-                        : (conta.temSenhaLocal ? 'Alterar senha local' : 'Definir senha local') }}
+                        : (conta.temSenhaLocal ? 'Alterar senha' : 'Definir senha') }}
                     </button>
                   </div>
                 </form>
@@ -528,7 +528,7 @@ async function salvarSenha() {
     marcarSenhaLocalNaSessao()
     await carregarConta()
   } catch (e) {
-    erroSenha.value = extrairMensagemErro(e, 'Não foi possível atualizar a senha local.')
+    erroSenha.value = extrairMensagemErro(e, 'Não foi possível atualizar a senha.')
     console.error(e)
   } finally {
     salvandoSenha.value = false

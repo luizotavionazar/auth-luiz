@@ -4,6 +4,7 @@ import br.com.luizotavionazar.authluiz.domain.autenticacao.event.UsuarioCadastra
 import br.com.luizotavionazar.authluiz.domain.notificacao.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -14,6 +15,7 @@ public class UsuarioCadastradoListener {
 
     private final EmailService emailService;
 
+    @Async
     @TransactionalEventListener
     public void aoCadastrarUsuario(UsuarioCadastradoEvent event) {
         try {

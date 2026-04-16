@@ -3,7 +3,6 @@ package br.com.luizotavionazar.authluiz.domain.autenticacao.service;
 import br.com.luizotavionazar.authluiz.api.autenticacao.dto.MensagemResponse;
 import br.com.luizotavionazar.authluiz.domain.autenticacao.entity.TipoTokenConfirmacao;
 import br.com.luizotavionazar.authluiz.domain.autenticacao.entity.TokenConfirmacao;
-import br.com.luizotavionazar.authluiz.domain.configuracao.service.SetupService;
 import br.com.luizotavionazar.authluiz.domain.notificacao.service.EmailService;
 import br.com.luizotavionazar.authluiz.domain.usuario.entity.Usuario;
 import br.com.luizotavionazar.authluiz.domain.usuario.repository.UsuarioRepository;
@@ -19,7 +18,6 @@ public class ConfirmacaoService {
 
     private final TokenConfirmacaoService tokenConfirmacaoService;
     private final UsuarioRepository usuarioRepository;
-    private final SetupService setupService;
     private final EmailService emailService;
 
     @Transactional
@@ -45,10 +43,6 @@ public class ConfirmacaoService {
 
     @Transactional
     public MensagemResponse reenviarVerificacao(Integer idUsuario, String ip) {
-        if (!setupService.obter().isConfirmacaoEmailHabilitada()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A confirmação de e-mail não está habilitada.");
-        }
-
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conta não encontrada!"));
 

@@ -24,8 +24,6 @@ public record SalvarSetupRequest(
         @NotBlank(message = "URL do frontend é obrigatória")
         String frontendBaseUrl,
 
-        boolean smtpAuth,
-        boolean smtpStarttls,
-        boolean confirmacaoEmailHabilitada
+        boolean smtpStarttls
 ) {
 }

@@ -12,7 +12,6 @@ import br.com.luizotavionazar.authluiz.domain.autenticacao.repository.ControleAl
 import br.com.luizotavionazar.authluiz.domain.autenticacao.repository.TokenRecuperacaoSenhaRepository;
 import br.com.luizotavionazar.authluiz.domain.autenticacao.service.PoliticaSenhaService;
 import br.com.luizotavionazar.authluiz.domain.autenticacao.service.TokenConfirmacaoService;
-import br.com.luizotavionazar.authluiz.domain.configuracao.service.SetupService;
 import br.com.luizotavionazar.authluiz.domain.identidadeexterna.entity.ProviderExterno;
 import br.com.luizotavionazar.authluiz.domain.identidadeexterna.repository.IdentidadeExternaRepository;
 import br.com.luizotavionazar.authluiz.domain.notificacao.service.EmailService;
@@ -40,7 +39,6 @@ public class ContaService {
     private final PasswordEncoder passwordEncoder;
     private final PoliticaSenhaService politicaSenhaService;
     private final TokenRecuperacaoSenhaRepository tokenRecuperacaoSenhaRepository;
-    private final SetupService setupService;
     private final TokenConfirmacaoService tokenConfirmacaoService;
     private final ControleAlteracaoEmailRepository controleAlteracaoEmailRepository;
     private final EmailService emailService;
@@ -84,9 +82,7 @@ public class ContaService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "E-mail já cadastrado!");
         }
 
-        boolean confirmacaoHabilitada = setupService.obter().isConfirmacaoEmailHabilitada();
-
-        if (confirmacaoHabilitada && !usuario.isEmailVerificado()) {
+        if (!usuario.isEmailVerificado()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "Confirme seu e-mail atual antes de solicitar uma alteração.");
         }
@@ -111,8 +107,7 @@ public class ContaService {
     public MensagemResponse atualizarSenha(Integer idUsuario, AtualizarSenhaRequest request) {
         Usuario usuario = buscarUsuario(idUsuario);
 
-        boolean confirmacaoHabilitada = setupService.obter().isConfirmacaoEmailHabilitada();
-        if (confirmacaoHabilitada && !usuario.isEmailVerificado()) {
+        if (!usuario.isEmailVerificado()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "Confirme seu e-mail antes de alterar a senha.");
         }
@@ -123,7 +118,7 @@ public class ContaService {
             String senhaAtual = request.senhaAtual();
             if (senhaAtual == null || senhaAtual.isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Informe a senha atual para alterar a senha local!");
+                        "Informe a senha atual para alterar a senha!");
             }
             if (!passwordEncoder.matches(senhaAtual, usuario.getSenhaHash())) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
@@ -143,7 +138,7 @@ public class ContaService {
         usuario.setSenhaHash(passwordEncoder.encode(request.novaSenha()));
         usuarioRepository.save(usuario);
         tokenRecuperacaoSenhaRepository.encerrarTokensAbertosDoUsuario(usuario.getId(), LocalDateTime.now());
-        return new MensagemResponse("Senha local definida com sucesso!");
+        return new MensagemResponse("Senha definida com sucesso!");
     }
 
     @Transactional

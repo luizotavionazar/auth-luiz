@@ -9,7 +9,6 @@ import br.com.luizotavionazar.authluiz.domain.autenticacao.event.UsuarioCadastra
 import br.com.luizotavionazar.authluiz.domain.autenticacao.repository.ControleRecuperacaoSenhaRepository;
 import br.com.luizotavionazar.authluiz.domain.autenticacao.repository.TokenRecuperacaoSenhaRepository;
 import br.com.luizotavionazar.authluiz.domain.autenticacao.util.TokenUtils;
-import br.com.luizotavionazar.authluiz.domain.configuracao.service.SetupService;
 import br.com.luizotavionazar.authluiz.domain.identidadeexterna.repository.IdentidadeExternaRepository;
 import br.com.luizotavionazar.authluiz.domain.identidadeexterna.entity.ProviderExterno;
 import br.com.luizotavionazar.authluiz.domain.notificacao.service.EmailService;
@@ -42,7 +41,6 @@ public class AutenticacaoService {
     private final PoliticaSenhaService politicaSenhaService;
     private final IdentidadeExternaRepository identidadeExternaRepository;
     private final TokenRecuperacaoSenhaExpiracaoService tokenRecuperacaoSenhaExpiracaoService;
-    private final SetupService setupService;
     private final TokenConfirmacaoService tokenConfirmacaoService;
 
     private static final long COOLDOWN_TOKEN_MINUTES = 2;
@@ -65,14 +63,9 @@ public class AutenticacaoService {
 
         Usuario usuario = usuarioService.cadastrar(request.nomeNormalizado(), emailNormalizado, request.senha());
 
-        boolean confirmacaoHabilitada = setupService.obter().isConfirmacaoEmailHabilitada();
-        String tokenVerificacao = null;
-
-        if (confirmacaoHabilitada) {
-            usuario.setEmailVerificado(false);
-            usuarioRepository.save(usuario);
-            tokenVerificacao = tokenConfirmacaoService.criarTokenVerificacaoCadastro(usuario, ip);
-        }
+        usuario.setEmailVerificado(false);
+        usuarioRepository.save(usuario);
+        String tokenVerificacao = tokenConfirmacaoService.criarTokenVerificacaoCadastro(usuario, ip);
 
         eventPublisher.publishEvent(new UsuarioCadastradoEvent(usuario.getId(), usuario.getNome(), usuario.getEmail(), tokenVerificacao));
 

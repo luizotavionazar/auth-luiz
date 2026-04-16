@@ -6,9 +6,7 @@ public record ConfiguracaoEmailPublicaResponse(
         String smtpUsername,
         String mailFrom,
         String frontendBaseUrl,
-        boolean smtpAuth,
         boolean smtpStarttls,
-        boolean setupConcluido,
-        boolean confirmacaoEmailHabilitada
+        boolean setupConcluido
 ) {
 }

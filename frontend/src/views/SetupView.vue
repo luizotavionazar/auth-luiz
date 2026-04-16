@@ -37,26 +37,8 @@
             </div>
             <div class="col-md-6 mb-3">
               <div class="form-check mt-0 pt-2">
-                <input v-model="form.smtpAuth" class="form-check-input" type="checkbox" id="smtpAuth" />
-                <label class="form-check-label" for="smtpAuth">SMTP exige autenticação</label>
-              </div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <div class="form-check mt-0 pt-2">
                 <input v-model="form.smtpStarttls" class="form-check-input" type="checkbox" id="smtpStarttls" />
                 <label class="form-check-label" for="smtpStarttls">Usar STARTTLS</label>
-              </div>
-            </div>
-            <div class="col-12 mb-3">
-              <div class="form-check">
-                <input v-model="form.confirmacaoEmailHabilitada" class="form-check-input" type="checkbox" id="confirmacaoEmailHabilitada" />
-                <label class="form-check-label" for="confirmacaoEmailHabilitada">
-                  Exigir confirmação de e-mail no cadastro e na alteração de e-mail
-                </label>
-              </div>
-              <div class="form-text">
-                Quando habilitado, novos usuários precisarão confirmar o e-mail antes de acessar recursos da conta.
-                Contas não confirmadas são removidas automaticamente após 7 dias.
               </div>
             </div>
           </div>
@@ -93,9 +75,7 @@ const form = reactive({
   smtpPassword: '',
   mailFrom: '',
   frontendBaseUrl: 'http://localhost:5173',
-  smtpAuth: true,
-  smtpStarttls: true,
-  confirmacaoEmailHabilitada: false
+  smtpStarttls: true
 })
 
 async function carregar() {
@@ -119,7 +99,6 @@ async function carregar() {
     form.smtpUsername = config.smtpUsername || ''
     form.mailFrom = config.mailFrom || ''
     form.frontendBaseUrl = config.frontendBaseUrl || 'http://localhost:5173'
-    form.smtpAuth = config.smtpAuth ?? true
     form.smtpStarttls = config.smtpStarttls ?? true
   } catch (e) {
     erro.value = extrairMensagemErro(e, 'Não foi possível carregar o setup.')

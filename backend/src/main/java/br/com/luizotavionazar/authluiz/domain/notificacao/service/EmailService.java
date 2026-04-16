@@ -145,7 +145,7 @@ public class EmailService {
         mailSender.setPassword(setupService.obterSmtpPasswordDescriptografada());
 
         Properties props = mailSender.getJavaMailProperties();
-        props.put("mail.smtp.auth", String.valueOf(config.isSmtpAuth()));
+        props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", String.valueOf(config.isSmtpStarttls()));
         return mailSender;
     }

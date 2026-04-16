@@ -81,7 +81,7 @@ src/main/java/.../authluiz/
 │   │       └── TokenUtils               gerarTokenSeguro() + gerarHash() (SHA-256)
 │   │
 │   ├── configuracao/
-│   │   ├── entity/   ConfiguracaoAplicacao  — setup SMTP + flags (setupConcluido, confirmacaoEmailHabilitada)
+│   │   ├── entity/   ConfiguracaoAplicacao  — setup SMTP + flag setupConcluido
 │   │   ├── repository/
 │   │   └── service/
 │   │       ├── SetupService             Leitura e persistência do setup
@@ -118,8 +118,9 @@ src/main/java/.../authluiz/
 | `V1__authluiz_inicial.sql`       | Schema base: `usuario`, `tokenRecuperacaoSenha`, `configuracaoAplicacao` |
 | `V2__google_login_e_senha_local.sql` | `identidadeExterna`, `controleRecuperacaoSenha`        |
 | `V3__cascade_delete_usuario.sql` | `ON DELETE CASCADE` nas FKs para `usuario`                 |
-| `V4__confirmacao_email.sql`      | `emailVerificado`, `emailPendente`, `tokenConfirmacao`, `controleAlteracaoEmail` |
+| `V4__confirmacao_email.sql`      | `emailVerificado`, `emailPendente`, `tokenConfirmacao`, `controleAlteracaoEmail`, `confirmacaoEmailHabilitada` em `configuracaoAplicacao` |
 | `V5__origem_cadastro.sql`        | `providerOrigem` em `usuario` — registra OAuth de origem  |
+| `V6__remove_confirmacao_email_flag.sql` | Remove coluna `confirmacaoEmailHabilitada` — confirmação de e-mail agora é sempre obrigatória |
 
 > O DDL está em modo `validate`. Sempre crie um novo arquivo `V{n}__*.sql` para alterações no schema — nunca edite migrações existentes.
 
@@ -161,14 +162,14 @@ docker compose -f ../compose-dev.yaml up -d
 | POST        | `/auth/login`                      | Pública      | Login local, retorna JWT                           |
 | POST        | `/auth/oauth/google`               | Pública      | Login/cadastro via Google (409 se e-mail já existe)|
 | POST        | `/auth/oauth/google/vincular`      | JWT          | Vincula Google à conta (e-mail Google = e-mail conta) |
-| DELETE      | `/auth/oauth/google/vincular`      | JWT          | Desvincula Google (exige senha local; bloqueado para contas criadas via Google) |
+| DELETE      | `/auth/oauth/google/vincular`      | JWT          | Desvincula Google (exige senha definida; bloqueado para contas criadas via Google) |
 | POST        | `/auth/recuperacao/iniciar`        | Pública      | Inicia recuperação de senha                        |
 | GET         | `/auth/recuperacao/validar`        | Pública      | Valida token de recuperação                        |
 | POST        | `/auth/recuperacao/redefinir`      | Pública      | Redefine senha com token válido                    |
 | GET         | `/auth/me`                         | JWT          | Dados da conta autenticada                         |
 | PATCH       | `/auth/me/nome`                    | JWT          | Atualiza nome                                      |
 | PATCH       | `/auth/me/email`                   | JWT          | Solicita alteração de e-mail (sempre envia confirmação) |
-| PATCH       | `/auth/me/senha`                   | JWT          | Altera ou define senha local                       |
+| PATCH       | `/auth/me/senha`                   | JWT          | Altera ou define senha                             |
 | DELETE      | `/auth/me`                         | JWT          | Exclui a conta                                     |
 | GET         | `/auth/verificacao/confirmar`      | Pública      | Confirma e-mail via token (cadastro ou alteração)  |
 | POST        | `/auth/verificacao/reenviar`       | JWT          | Reenvia e-mail de verificação (cooldown: 2 min)    |

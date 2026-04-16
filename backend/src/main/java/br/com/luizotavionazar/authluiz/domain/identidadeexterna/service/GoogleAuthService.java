@@ -106,7 +106,7 @@ public class GoogleAuthService {
 
         if (!usuario.possuiSenhaLocal()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Defina uma senha local antes de desvincular o Google para não perder o acesso à conta.");
+                    "Defina uma senha antes de desvincular o Google para não perder o acesso à conta.");
         }
 
         String senha = request != null ? request.senha() : null;

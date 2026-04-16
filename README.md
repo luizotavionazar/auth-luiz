@@ -9,10 +9,10 @@ API de autenticação pronta para reutilização, construída com Spring Boot e 
 - Cadastro de conta com e-mail e senha
 - Login com JWT (HMAC-SHA256, stateless)
 - Login e vinculação de conta com Google (OAuth via Google Identity Services)
-- Confirmação de e-mail no cadastro (feature flag) e na alteração de e-mail (sempre ativa)
+- Confirmação de e-mail no cadastro e na alteração de e-mail
 - Recuperação e redefinição de senha por e-mail
-- Gerenciamento de conta autenticada: alterar nome, e-mail, senha local
-- Definição de senha local para contas criadas via Google
+- Gerenciamento de conta autenticada: alterar nome, e-mail, senha
+- Definição de senha para contas criadas via Google
 - Exclusão de conta
 - Setup inicial guiado para configuração de envio de e-mail (SMTP)
 
