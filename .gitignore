@@ -1,6 +1,6 @@
 # Editor
 .vscode/
-
+resetabanco.bat
 # Arquivos temporários
 *.zip
 *.rar
