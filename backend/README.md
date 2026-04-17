@@ -98,7 +98,7 @@ src/main/java/.../authluiz/
 │   │
 │   ├── notificacao/
 │   │   └── service/
-│   │       └── EmailService             Envio de e-mails transacionais via JavaMail
+│   │       └── EmailService             Envio de e-mails transacionais via JavaMail (todos os métodos são @Async)
 │   │
 │   └── usuario/
 │       ├── entity/   Usuario            UserDetails do Spring Security; campo providerOrigem

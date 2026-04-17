@@ -18,6 +18,7 @@ public class EmailService {
 
     private final SetupService setupService;
 
+    @Async
     public void enviarBoasVindas(String nome, String email) {
         ConfiguracaoAplicacao config = validarSetupEmail();
 
@@ -41,6 +42,7 @@ public class EmailService {
         criarMailSender(config).send(mensagem);
     }
 
+    @Async
     public void enviarVerificacaoCadastro(String nome, String email, String token) {
         ConfiguracaoAplicacao config = validarSetupEmail();
 
@@ -96,6 +98,7 @@ public class EmailService {
         criarMailSender(config).send(mensagem);
     }
 
+    @Async
     public void enviarRecuperacaoSenha(String nome, String email, String token) {
         ConfiguracaoAplicacao config = validarSetupEmail();
 
