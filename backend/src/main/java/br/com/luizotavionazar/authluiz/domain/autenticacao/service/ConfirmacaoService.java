@@ -31,7 +31,7 @@ public class ConfirmacaoService {
         } else if (token.getTipo() == TipoTokenConfirmacao.ALTERACAO_EMAIL) {
             String novoEmail = token.getEmailDestino();
             if (usuarioRepository.existsByEmailAndIdNot(novoEmail, usuario.getId())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Este e-mail já está em uso por outra conta.");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Este e-mail já está em uso por outra conta!");
             }
             usuario.setEmail(novoEmail);
             usuario.setEmailPendente(null);
@@ -47,17 +47,37 @@ public class ConfirmacaoService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conta não encontrada!"));
 
         if (usuario.isEmailVerificado()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O e-mail desta conta já foi verificado.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O e-mail desta conta já foi verificado!");
         }
 
         if (tokenConfirmacaoService.estaDentroDoCooldown(idUsuario, TipoTokenConfirmacao.VERIFICACAO_CADASTRO)) {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
-                    "Aguarde alguns instantes antes de solicitar um novo e-mail de verificação.");
+                    "Aguarde alguns instantes antes de solicitar um novo e-mail de verificação!");
         }
 
         String novoToken = tokenConfirmacaoService.criarTokenVerificacaoCadastro(usuario, ip);
         emailService.enviarVerificacaoCadastro(usuario.getNome(), usuario.getEmail(), novoToken);
 
-        return new MensagemResponse("E-mail de verificação reenviado com sucesso.");
+        return new MensagemResponse("E-mail de verificação reenviado com sucesso!");
+    }
+
+    @Transactional
+    public MensagemResponse reenviarConfirmacaoAlteracaoEmail(Integer idUsuario, String ip) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conta não encontrada!"));
+
+        if (usuario.getEmailPendente() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não há alteração de e-mail pendente.");
+        }
+
+        if (tokenConfirmacaoService.estaDentroDoCooldown(idUsuario, TipoTokenConfirmacao.ALTERACAO_EMAIL)) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
+                    "Aguarde alguns instantes antes de solicitar um novo e-mail de confirmação.");
+        }
+
+        String novoToken = tokenConfirmacaoService.criarTokenAlteracaoEmail(usuario, usuario.getEmailPendente(), ip);
+        emailService.enviarConfirmacaoAlteracaoEmail(usuario.getNome(), usuario.getEmailPendente(), novoToken);
+
+        return new MensagemResponse("E-mail de confirmação reenviado com sucesso!");
     }
 }

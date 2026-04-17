@@ -67,7 +67,8 @@ public class AutenticacaoService {
         usuarioRepository.save(usuario);
         String tokenVerificacao = tokenConfirmacaoService.criarTokenVerificacaoCadastro(usuario, ip);
 
-        eventPublisher.publishEvent(new UsuarioCadastradoEvent(usuario.getId(), usuario.getNome(), usuario.getEmail(), tokenVerificacao));
+        eventPublisher.publishEvent(
+                new UsuarioCadastradoEvent(usuario.getId(), usuario.getNome(), usuario.getEmail(), tokenVerificacao));
 
         return CadastroResponse.from(usuario);
     }
@@ -79,7 +80,7 @@ public class AutenticacaoService {
         Usuario usuario = usuarioRepository.findByEmail(emailNormalizado)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, MSG_CREDENCIAIS_INVALIDAS));
 
-        if (!usuario.possuiSenhaLocal()) {
+        if (!usuario.possuiSenha()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, MSG_CREDENCIAIS_INVALIDAS);
         }
 
@@ -88,7 +89,8 @@ public class AutenticacaoService {
         }
 
         String token = jwtService.gerarToken(usuario);
-        boolean temLoginGoogle = identidadeExternaRepository.existsByUsuarioIdAndProvider(usuario.getId(), ProviderExterno.GOOGLE);
+        boolean temLoginGoogle = identidadeExternaRepository.existsByUsuarioIdAndProvider(usuario.getId(),
+                ProviderExterno.GOOGLE);
         return LoginResponse.from(usuario, temLoginGoogle, token, jwtService.getExpirationMinutes());
     }
 
@@ -99,8 +101,9 @@ public class AutenticacaoService {
         String emailNormalizado = request.emailNormalizado();
 
         usuarioRepository.findByEmail(emailNormalizado).ifPresent(usuario -> {
-            boolean contaGoogleOnly = !usuario.possuiSenhaLocal()
-                    && identidadeExternaRepository.existsByUsuarioIdAndProvider(usuario.getId(), ProviderExterno.GOOGLE);
+            boolean contaGoogleOnly = !usuario.possuiSenha()
+                    && identidadeExternaRepository.existsByUsuarioIdAndProvider(usuario.getId(),
+                            ProviderExterno.GOOGLE);
             if (contaGoogleOnly) {
                 return;
             }
@@ -154,7 +157,8 @@ public class AutenticacaoService {
         String tokenHash = TokenUtils.gerarHash(request.token());
 
         TokenRecuperacaoSenha token = tokenRecuperacaoSenhaRepository.findByTokenHash(tokenHash)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Link de recuperação inválido ou expirado!"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Link de recuperação inválido ou expirado!"));
 
         if (token.usado() || token.encerrado()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Link de recuperação inválido ou expirado!");
@@ -168,7 +172,7 @@ public class AutenticacaoService {
         politicaSenhaService.validar(request.novaSenha());
 
         Usuario usuario = token.getUsuario();
-        if (usuario.possuiSenhaLocal() && passwordEncoder.matches(request.novaSenha(), usuario.getSenhaHash())) {
+        if (usuario.possuiSenha() && passwordEncoder.matches(request.novaSenha(), usuario.getSenhaHash())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A nova senha deve ser diferente da atual!");
         }
 
@@ -188,7 +192,8 @@ public class AutenticacaoService {
         String tokenHash = TokenUtils.gerarHash(tokenBruto);
 
         TokenRecuperacaoSenha token = tokenRecuperacaoSenhaRepository.findByTokenHash(tokenHash)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Link de recuperação inválido ou expirado!"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Link de recuperação inválido ou expirado!"));
 
         if (token.usado() || token.encerrado()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Link de recuperação inválido ou expirado!");
@@ -203,7 +208,8 @@ public class AutenticacaoService {
     }
 
     private MensagemResponse mensagemGenericaRecuperacao() {
-        return new MensagemResponse("Enviaremos as instruções de recuperação caso exista uma conta vinculada a esse e-mail!");
+        return new MensagemResponse(
+                "Enviaremos as instruções de recuperação caso exista uma conta vinculada a esse e-mail!");
     }
 
     private void validarLimitePorIp(String ip) {
@@ -220,12 +226,13 @@ public class AutenticacaoService {
             long retryAfterSeconds = Duration.between(agora, controle.getBloqueadoAte()).toSeconds();
             long minutosRestantes = Math.max(1, (retryAfterSeconds + 59) / 60);
             throw new ExcecaoLimiteTentativas(
-                    "Foram realizadasd muitas solicitações de recuperação a partir deste dispositivo ou rede. Tente novamente em cerca de " + minutosRestantes + " minuto(s)!",
-                    retryAfterSeconds
-            );
+                    "Foram realizadasd muitas solicitações de recuperação a partir deste dispositivo ou rede. Tente novamente em cerca de "
+                            + minutosRestantes + " minuto(s)!",
+                    retryAfterSeconds);
         }
 
-        if (controle.getJanelaInicio() == null || agora.isAfter(controle.getJanelaInicio().plusMinutes(JANELA_IP_MINUTES))) {
+        if (controle.getJanelaInicio() == null
+                || agora.isAfter(controle.getJanelaInicio().plusMinutes(JANELA_IP_MINUTES))) {
             controle.setJanelaInicio(agora);
             controle.setQuantidade(1);
             controle.setBloqueadoAte(null);
@@ -244,9 +251,9 @@ public class AutenticacaoService {
             long retryAfterSeconds = Duration.between(agora, bloqueadoAte).toSeconds();
             long minutosRestantes = Math.max(1, (retryAfterSeconds + 59) / 60);
             throw new ExcecaoLimiteTentativas(
-                    "Foram realizadasd muitas solicitações de recuperação a partir deste dispositivo ou rede. Tente novamente em cerca de " + minutosRestantes + " minuto(s)!",
-                    retryAfterSeconds
-            );
+                    "Foram realizadasd muitas solicitações de recuperação a partir deste dispositivo ou rede. Tente novamente em cerca de "
+                            + minutosRestantes + " minuto(s)!",
+                    retryAfterSeconds);
         }
 
         controleRecuperacaoSenhaRepository.save(controle);

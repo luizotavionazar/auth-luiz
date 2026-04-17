@@ -172,5 +172,6 @@ docker compose -f ../compose-dev.yaml up -d
 | PATCH       | `/auth/me/senha`                   | JWT          | Altera ou define senha                             |
 | DELETE      | `/auth/me`                         | JWT          | Exclui a conta                                     |
 | GET         | `/auth/verificacao/confirmar`      | Pública      | Confirma e-mail via token (cadastro ou alteração)  |
-| POST        | `/auth/verificacao/reenviar`       | JWT          | Reenvia e-mail de verificação (cooldown: 2 min)    |
+| POST        | `/auth/verificacao/reenviar`       | JWT          | Reenvia e-mail de verificação de cadastro (cooldown: 2 min) |
+| POST        | `/auth/verificacao/reenviar-alteracao-email` | JWT | Reenvia e-mail de confirmação de alteração de e-mail (cooldown: 2 min) |
 | GET / POST  | `/setup/**`                        | Chave mestra | Configuração inicial                               |

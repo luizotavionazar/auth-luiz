@@ -43,7 +43,7 @@ public class GoogleAuthService {
 
         if (usuarioRepository.existsByEmail(googleUsuario.emailNormalizado())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Já existe uma conta com este e-mail. Faça login com sua senha e vincule a conta Google posteriormente.");
+                    "Já existe uma conta com este e-mail. Faça login com sua senha e vincule a conta Google posteriormente!");
         }
 
         if (!googleUsuario.emailVerificado()) {
@@ -70,19 +70,25 @@ public class GoogleAuthService {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conta não encontrada!"));
 
+        if (!usuario.isEmailVerificado()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Confirme seu e-mail antes de vincular uma conta Google!");
+        }
+
         if (!googleUsuario.emailNormalizado().equals(usuario.getEmail())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "O e-mail da conta Google deve ser igual ao e-mail da sua conta.");
+                    "O e-mail da conta Google deve ser igual ao e-mail da sua conta!");
         }
 
         if (identidadeExternaRepository.existsByUsuarioIdAndProvider(idUsuario, ProviderExterno.GOOGLE)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Esta conta já está vinculada ao Google.");
+                    "Esta conta já está vinculada ao Google!");
         }
 
-        if (identidadeExternaRepository.findByProviderAndProviderUserId(ProviderExterno.GOOGLE, googleUsuario.providerUserId()).isPresent()) {
+        if (identidadeExternaRepository
+                .findByProviderAndProviderUserId(ProviderExterno.GOOGLE, googleUsuario.providerUserId()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Esta conta Google já está vinculada a outra conta.");
+                    "Esta conta Google já está vinculada a outra conta!");
         }
 
         criarVinculoGoogle(usuario, googleUsuario);
@@ -96,28 +102,28 @@ public class GoogleAuthService {
 
         if (!identidadeExternaRepository.existsByUsuarioIdAndProvider(idUsuario, ProviderExterno.GOOGLE)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "Esta conta não está vinculada ao Google.");
+                    "Esta conta não está vinculada ao Google!");
         }
 
         if (ProviderExterno.GOOGLE.equals(usuario.getProviderOrigem())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Esta conta foi criada com Google e não pode ser desvinculada.");
+                    "Esta conta foi criada com Google e não pode ser desvinculada!");
         }
 
-        if (!usuario.possuiSenhaLocal()) {
+        if (!usuario.possuiSenha()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Defina uma senha antes de desvincular o Google para não perder o acesso à conta.");
+                    "Defina uma senha antes de desvincular o Google para não perder o acesso à conta!");
         }
 
         String senha = request != null ? request.senha() : null;
         if (senha == null || senha.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Informe a senha para confirmar a desvinculação.");
+                    "Informe a senha para confirmar a desvinculação!");
         }
 
         if (!passwordEncoder.matches(senha, usuario.getSenhaHash())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                    "Senha incorreta.");
+                    "Senha incorreta!");
         }
 
         identidadeExternaRepository.deleteByUsuarioIdAndProvider(idUsuario, ProviderExterno.GOOGLE);
@@ -164,8 +170,7 @@ public class GoogleAuthService {
                 providerUserId,
                 email.trim().toLowerCase(),
                 emailVerificado,
-                nomeNormalizado
-        );
+                nomeNormalizado);
     }
 
     private String claimComoString(Jwt jwt, String nomeClaim) {
@@ -185,7 +190,6 @@ public class GoogleAuthService {
             String providerUserId,
             String emailNormalizado,
             boolean emailVerificado,
-            String nomeNormalizado
-    ) {
+            String nomeNormalizado) {
     }
 }

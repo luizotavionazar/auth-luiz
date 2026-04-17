@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -67,6 +68,7 @@ public class EmailService {
         criarMailSender(config).send(mensagem);
     }
 
+    @Async
     public void enviarConfirmacaoAlteracaoEmail(String nome, String novoEmail, String token) {
         ConfiguracaoAplicacao config = validarSetupEmail();
 

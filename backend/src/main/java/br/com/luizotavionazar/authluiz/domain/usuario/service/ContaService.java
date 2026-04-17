@@ -53,16 +53,24 @@ public class ContaService {
             usuario.setEmailPendente(null);
         }
 
-        boolean temLoginGoogle = identidadeExternaRepository.existsByUsuarioIdAndProvider(usuario.getId(), ProviderExterno.GOOGLE);
+        boolean temLoginGoogle = identidadeExternaRepository.existsByUsuarioIdAndProvider(usuario.getId(),
+                ProviderExterno.GOOGLE);
         return ContaResponse.from(usuario, temLoginGoogle);
     }
 
     @Transactional
     public ContaResponse atualizarNome(Integer idUsuario, AtualizarNomeRequest request) {
         Usuario usuario = buscarUsuario(idUsuario);
+
+        if (!usuario.isEmailVerificado()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Confirme seu e-mail antes de alterar o nome!");
+        }
+
         usuario.setNome(request.nomeNormalizado());
         usuarioRepository.save(usuario);
-        boolean temLoginGoogle = identidadeExternaRepository.existsByUsuarioIdAndProvider(usuario.getId(), ProviderExterno.GOOGLE);
+        boolean temLoginGoogle = identidadeExternaRepository.existsByUsuarioIdAndProvider(usuario.getId(),
+                ProviderExterno.GOOGLE);
         return ContaResponse.from(usuario, temLoginGoogle);
     }
 
@@ -70,10 +78,11 @@ public class ContaService {
     public ContaResponse atualizarEmail(Integer idUsuario, AtualizarEmailRequest request, String ip) {
         Usuario usuario = buscarUsuario(idUsuario);
 
-        boolean temLoginGoogle = identidadeExternaRepository.existsByUsuarioIdAndProvider(usuario.getId(), ProviderExterno.GOOGLE);
+        boolean temLoginGoogle = identidadeExternaRepository.existsByUsuarioIdAndProvider(usuario.getId(),
+                ProviderExterno.GOOGLE);
         if (temLoginGoogle) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Contas vinculadas ao Google não podem alterar o e-mail.");
+                    "Contas vinculadas ao Google não podem alterar o e-mail!");
         }
 
         String emailNormalizado = request.emailNormalizado();
@@ -84,12 +93,12 @@ public class ContaService {
 
         if (!usuario.isEmailVerificado()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Confirme seu e-mail atual antes de solicitar uma alteração.");
+                    "Confirme seu e-mail atual antes de solicitar uma alteração!");
         }
 
         if (tokenConfirmacaoService.estaDentroDoCooldown(idUsuario, TipoTokenConfirmacao.ALTERACAO_EMAIL)) {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
-                    "Aguarde alguns instantes antes de solicitar uma nova confirmação de e-mail.");
+                    "Aguarde alguns instantes antes de solicitar uma nova confirmação de e-mail!");
         }
 
         validarLimiteAlteracaoEmail(idUsuario);
@@ -109,12 +118,12 @@ public class ContaService {
 
         if (!usuario.isEmailVerificado()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Confirme seu e-mail antes de alterar a senha.");
+                    "Confirme seu e-mail antes de alterar a senha!");
         }
 
         politicaSenhaService.validar(request.novaSenha());
 
-        if (usuario.possuiSenhaLocal()) {
+        if (usuario.possuiSenha()) {
             String senhaAtual = request.senhaAtual();
             if (senhaAtual == null || senhaAtual.isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -145,13 +154,14 @@ public class ContaService {
     public void deletarConta(Integer idUsuario, DeletarContaRequest request) {
         Usuario usuario = buscarUsuario(idUsuario);
 
-        if (usuario.possuiSenhaLocal()) {
+        if (usuario.possuiSenha()) {
             String senha = request != null ? request.senha() : null;
             if (senha == null || senha.isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe a senha para confirmar a exclusão da conta.");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Informe a senha para confirmar a exclusão da conta!");
             }
             if (!passwordEncoder.matches(senha, usuario.getSenhaHash())) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Senha incorreta.");
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Senha incorreta!");
             }
         }
 
@@ -170,7 +180,7 @@ public class ContaService {
 
         if (controle.getBloqueadoAte() != null && agora.isBefore(controle.getBloqueadoAte())) {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
-                    "Muitas solicitações de alteração de e-mail. Tente novamente mais tarde.");
+                    "Muitas solicitações de alteração de e-mail. Tente novamente mais tarde!");
         }
 
         if (controle.getJanelaInicio() == null
@@ -189,7 +199,7 @@ public class ContaService {
             controle.setBloqueadoAte(agora.plusMinutes(BLOQUEIO_ALTERACAO_EMAIL_MINUTES));
             controleAlteracaoEmailRepository.save(controle);
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
-                    "Muitas solicitações de alteração de e-mail. Tente novamente mais tarde.");
+                    "Muitas solicitações de alteração de e-mail. Tente novamente mais tarde!");
         }
 
         controleAlteracaoEmailRepository.save(controle);

@@ -10,15 +10,15 @@
         <template v-else-if="sucesso">
           <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
           <h1 class="h4 fw-bold mt-3 mb-2">E-mail confirmado!</h1>
-          <p class="text-muted mb-4">Sua conta está ativa. Você já pode acessar normalmente.</p>
+          <p class="text-muted mb-4">Sua conta está ativa agora.</p>
           <router-link to="/login" class="btn btn-primary">Ir para o login</router-link>
         </template>
 
         <template v-else>
           <i class="bi bi-x-circle-fill text-danger" style="font-size: 3rem;"></i>
-          <h1 class="h4 fw-bold mt-3 mb-2">Link inválido ou expirado</h1>
+          <h1 class="h4 fw-bold mt-3 mb-2">Deu ruim!</h1>
           <p class="text-muted mb-4">{{ erro }}</p>
-          <router-link to="/login" class="btn btn-outline-secondary">Voltar ao login</router-link>
+          <router-link to="/login" class="btn btn-primary">Voltar ao login</router-link>
         </template>
       </div>
     </div>

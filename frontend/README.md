@@ -66,9 +66,10 @@ npm run preview  # pré-visualização do build de produção
 - Visualização dos dados da conta
 - Alteração de nome
 - Alteração de e-mail (sempre exige confirmação; bloqueada para contas com Google vinculado)
+- Reenvio de e-mail de confirmação de alteração de e-mail (com botão no alerta de pendência)
 - Troca de senha
 - Definição de senha para contas criadas via Google
-- Reenvio de e-mail de verificação
+- Reenvio de e-mail de verificação de cadastro
 - Vinculação de conta Google (exige e-mail idêntico ao da conta)
 - Desvinculação de conta Google com confirmação de senha (bloqueada para contas criadas via Google)
 - Exclusão de conta com confirmação de senha

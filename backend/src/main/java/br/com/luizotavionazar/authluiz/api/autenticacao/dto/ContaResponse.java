@@ -9,27 +9,25 @@ public record ContaResponse(
         Integer idUsuario,
         String nome,
         String email,
-        Boolean temSenhaLocal,
+        Boolean temSenha,
         Boolean temLoginGoogle,
         Boolean emailVerificado,
         String emailPendente,
         String providerOrigem,
         LocalDateTime dataCriacao,
-        LocalDateTime dataAtualiza
-) {
+        LocalDateTime dataAtualiza) {
     public static ContaResponse from(Usuario usuario, boolean temLoginGoogle) {
         ProviderExterno provider = usuario.getProviderOrigem();
         return new ContaResponse(
                 usuario.getId(),
                 usuario.getNome(),
                 usuario.getEmail(),
-                usuario.possuiSenhaLocal(),
+                usuario.possuiSenha(),
                 temLoginGoogle,
                 usuario.isEmailVerificado(),
                 usuario.getEmailPendente(),
                 provider != null ? provider.name() : null,
                 usuario.getDataCriacao(),
-                usuario.getDataAtualiza()
-        );
+                usuario.getDataAtualiza());
     }
 }

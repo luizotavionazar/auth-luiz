@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 public class TokenConfirmacaoService {
 
     static final long EXPIRACAO_VERIFICACAO_CADASTRO_DIAS = 7;
-    static final long EXPIRACAO_ALTERACAO_EMAIL_MINUTES = 1;
+    static final long EXPIRACAO_ALTERACAO_EMAIL_MINUTES = 30;
     static final long COOLDOWN_REENVIO_MINUTES = 2;
 
     private final TokenConfirmacaoRepository tokenConfirmacaoRepository;

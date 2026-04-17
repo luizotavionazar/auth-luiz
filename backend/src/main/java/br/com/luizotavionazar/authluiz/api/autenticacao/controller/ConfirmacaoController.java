@@ -27,8 +27,18 @@ public class ConfirmacaoController {
             @AuthenticationPrincipal Jwt jwt,
             HttpServletRequest httpRequest
     ) {
-        Integer idUsuario = jwt.getClaim("id");
+        Integer idUsuario = Integer.valueOf(jwt.getSubject());
         String ip = httpRequest.getRemoteAddr();
         return ResponseEntity.ok(confirmacaoService.reenviarVerificacao(idUsuario, ip));
+    }
+
+    @PostMapping("/reenviar-alteracao-email")
+    public ResponseEntity<MensagemResponse> reenviarConfirmacaoAlteracaoEmail(
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpRequest
+    ) {
+        Integer idUsuario = Integer.valueOf(jwt.getSubject());
+        String ip = httpRequest.getRemoteAddr();
+        return ResponseEntity.ok(confirmacaoService.reenviarConfirmacaoAlteracaoEmail(idUsuario, ip));
     }
 }

@@ -6,26 +6,24 @@ public record LoginResponse(
         Integer idUsuario,
         String nome,
         String email,
-        Boolean temSenhaLocal,
+        Boolean temSenha,
         Boolean temLoginGoogle,
         Boolean emailVerificado,
         String token,
         String tokenType,
         Long expiresInMinutes,
-        String mensagem
-) {
+        String mensagem) {
     public static LoginResponse from(Usuario usuario, boolean temLoginGoogle, String token, long expiresInMinutes) {
         return new LoginResponse(
                 usuario.getId(),
                 usuario.getNome(),
                 usuario.getEmail(),
-                usuario.possuiSenhaLocal(),
+                usuario.possuiSenha(),
                 temLoginGoogle,
                 usuario.isEmailVerificado(),
                 token,
                 "Bearer",
                 expiresInMinutes,
-                "Login realizado com sucesso"
-        );
+                "Login realizado com sucesso");
     }
 }

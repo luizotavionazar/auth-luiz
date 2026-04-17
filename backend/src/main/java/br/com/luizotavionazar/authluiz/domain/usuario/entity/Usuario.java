@@ -57,7 +57,7 @@ public class Usuario implements UserDetails {
     @Column(name = "providerOrigem", length = 50)
     private ProviderExterno providerOrigem;
 
-    public boolean possuiSenhaLocal() {
+    public boolean possuiSenha() {
         return senhaHash != null && !senhaHash.isBlank();
     }
 
@@ -66,10 +66,33 @@ public class Usuario implements UserDetails {
         return List.of();
     }
 
-    @Override public String getPassword() { return senhaHash; }
-    @Override public String getUsername() { return email; }
-    @Override public boolean isAccountNonExpired() { return true; }
-    @Override public boolean isAccountNonLocked() { return true; }
-    @Override public boolean isCredentialsNonExpired() { return true; }
-    @Override public boolean isEnabled() { return true; }
+    @Override
+    public String getPassword() {
+        return senhaHash;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }

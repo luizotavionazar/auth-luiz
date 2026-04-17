@@ -13,19 +13,32 @@
       <div v-else-if="erro" class="alert alert-danger">{{ erro }}</div>
 
       <template v-else-if="conta">
-        <div v-if="!conta.emailVerificado" class="alert alert-warning d-flex flex-column flex-sm-row align-items-sm-center gap-2 mb-4">
-          <div class="flex-grow-1">
-            <strong>E-mail não verificado.</strong> Verifique sua caixa de entrada e clique no link de ativação enviado para <strong>{{ conta.email }}</strong>.
-            A alteração de senha fica bloqueada até a verificação.
+        <div v-if="!conta.emailVerificado" class="alert alert-warning mb-4">
+          <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2">
+            <div class="flex-grow-1">
+              <strong>E-mail não verificado!</strong>
+              Verifique sua caixa de entrada em <strong>{{ conta.email }}</strong> e clique no link de ativação enviado.
+            </div>
+            <button class="btn btn-sm btn-warning flex-shrink-0" :disabled="reenviando" @click="reenviarVerificacaoEmail">
+              {{ reenviando ? 'Enviando...' : 'Reenviar e-mail' }}
+            </button>
           </div>
-          <button class="btn btn-sm btn-warning flex-shrink-0" :disabled="reenviando" @click="reenviarVerificacaoEmail">
-            {{ reenviando ? 'Enviando...' : 'Reenviar e-mail' }}
-          </button>
+          <div v-if="mensagemReenvioVerificacao" class="small mt-2 text-success-emphasis">{{ mensagemReenvioVerificacao }}</div>
+          <div v-if="erroReenvioVerificacao" class="small mt-2 text-danger-emphasis">{{ erroReenvioVerificacao }}</div>
         </div>
 
         <div v-if="conta.emailPendente" class="alert alert-info mb-4">
-          <strong>Alteração de e-mail pendente!<br></strong>
-          Acesse o link de confirmação enviado para <strong>{{ conta.emailPendente }}<br></strong>
+          <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2">
+            <div class="flex-grow-1">
+              <strong>Alteração de e-mail pendente!</strong><br>
+              Acesse o link de confirmação enviado para <strong>{{ conta.emailPendente }}</strong>.
+            </div>
+            <button class="btn btn-sm btn-info flex-shrink-0" :disabled="reenviandoAlteracaoEmail" @click="reenviarEmailAlteracao">
+              {{ reenviandoAlteracaoEmail ? 'Enviando...' : 'Reenviar e-mail' }}
+            </button>
+          </div>
+          <div v-if="mensagemReenvioAlteracaoEmail" class="small mt-2 text-success-emphasis">{{ mensagemReenvioAlteracaoEmail }}</div>
+          <div v-if="erroReenvioAlteracaoEmail" class="small mt-2 text-danger-emphasis">{{ erroReenvioAlteracaoEmail }}</div>
         </div>
         <div class="card shadow border-0 rounded-4 mb-4">
           <div class="card-body p-4">
@@ -38,8 +51,8 @@
 
               <div class="d-flex flex-wrap gap-2 align-content-start">
                 <span class="badge rounded-pill text-bg-primary-subtle text-primary-emphasis border">ID {{ conta.idUsuario }}</span>
-                <span class="badge rounded-pill" :class="conta.temSenhaLocal ? 'text-bg-success-subtle text-success-emphasis border' : 'text-bg-warning-subtle text-warning-emphasis border'">
-                  {{ conta.temSenhaLocal ? 'Senha ativa' : 'Sem senha' }}
+                <span class="badge rounded-pill" :class="conta.temSenha ? 'text-bg-success-subtle text-success-emphasis border' : 'text-bg-warning-subtle text-warning-emphasis border'">
+                  {{ conta.temSenha ? 'Senha ativa' : 'Sem senha' }}
                 </span>
                 <span class="badge rounded-pill" :class="conta.temLoginGoogle ? 'text-bg-success-subtle text-success-emphasis border' : 'text-bg-secondary-subtle text-secondary-emphasis border'">
                   {{ conta.temLoginGoogle ? 'Google vinculado' : 'Google não vinculado' }}
@@ -75,7 +88,7 @@
                   <div v-if="erroNome" class="alert alert-danger py-2 small">{{ erroNome }}</div>
 
                   <div class="d-grid">
-                    <button class="btn btn-primary" :disabled="salvandoNome">
+                    <button class="btn btn-primary" :disabled="salvandoNome || !conta.emailVerificado">
                       {{ salvandoNome ? 'Salvando...' : 'Salvar nome' }}
                     </button>
                   </div>
@@ -98,7 +111,7 @@
                   <div v-if="erroEmail" class="alert alert-danger py-2 small">{{ erroEmail }}</div>
 
                   <div class="d-grid">
-                    <button class="btn btn-primary" :disabled="salvandoEmail">
+                    <button class="btn btn-primary" :disabled="salvandoEmail || !conta.emailVerificado">
                       {{ salvandoEmail ? 'Salvando...' : 'Salvar e-mail' }}
                     </button>
                   </div>
@@ -132,10 +145,15 @@
                 </template>
 
                 <template v-else>
-                  <div v-if="mensagemGoogle" class="alert alert-success py-2 small mb-3">{{ mensagemGoogle }}</div>
-                  <div v-if="erroGoogle" class="alert alert-danger py-2 small mb-3">{{ erroGoogle }}</div>
-                  <div ref="googleVincularButtonRef" class="google-button-host"></div>
-                  <div v-if="googleVincularIndisponivel" class="alert alert-warning py-2 small mt-2">{{ googleVincularIndisponivel }}</div>
+                  <div v-if="!conta.emailVerificado" class="alert alert-warning py-2 small mb-0">
+                    Confirme seu e-mail para habilitar a vinculação com Google.
+                  </div>
+                  <template v-else>
+                    <div v-if="mensagemGoogle" class="alert alert-success py-2 small mb-3">{{ mensagemGoogle }}</div>
+                    <div v-if="erroGoogle" class="alert alert-danger py-2 small mb-3">{{ erroGoogle }}</div>
+                    <div ref="googleVincularButtonRef" class="google-button-host"></div>
+                    <div v-if="googleVincularIndisponivel" class="alert alert-warning py-2 small mt-2">{{ googleVincularIndisponivel }}</div>
+                  </template>
                 </template>
               </div>
             </div>
@@ -146,23 +164,18 @@
               <div class="card-body p-4">
                 <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
                   <div>
-                    <h2 class="h5 mb-2">{{ conta.temSenhaLocal ? 'Trocar senha' : 'Definir senha' }}</h2>
+                    <h2 class="h5 mb-2">{{ conta.temSenha ? 'Trocar senha' : 'Definir senha' }}</h2>
                     <p class="text-muted mb-0 small">
-                      {{ conta.temSenhaLocal
+                      {{ conta.temSenha
                         ? 'Informe a senha atual e escolha uma nova senha.'
                         : 'Sua conta foi criada sem senha. Defina uma senha para também poder entrar por e-mail.' }}
                     </p>
-                  </div>
-
-                  <div class="small text-muted">
-                    <div><strong>Login com Google:</strong> {{ conta.temLoginGoogle ? 'Ativo' : 'Não vinculado' }}</div>
-                    <div><strong>Senha:</strong> {{ conta.temSenhaLocal ? 'Configurada' : 'Ainda não definida' }}</div>
                   </div>
                 </div>
 
                 <form @submit.prevent="salvarSenha">
                   <div class="row g-3">
-                    <div v-if="conta.temSenhaLocal" class="col-lg-4">
+                    <div v-if="conta.temSenha" class="col-lg-4">
                       <label class="form-label">Senha atual</label>
                       <div class="position-relative">
                         <input v-model="formSenha.senhaAtual" :type="mostrarSenhaAtual ? 'text' : 'password'" class="form-control pe-5 campo-senha" placeholder="Digite a senha atual" />
@@ -172,7 +185,7 @@
                       </div>
                     </div>
 
-                    <div :class="conta.temSenhaLocal ? 'col-lg-4' : 'col-lg-6'">
+                    <div :class="conta.temSenha ? 'col-lg-4' : 'col-lg-6'">
                       <label class="form-label">Nova senha</label>
                       <div class="position-relative">
                         <input v-model="formSenha.novaSenha" :type="mostrarNovaSenha ? 'text' : 'password'" class="form-control pe-5 campo-senha" placeholder="Digite a nova senha" @focus="senhaEmFoco = true" @blur="senhaEmFoco = false" />
@@ -188,7 +201,7 @@
                       </ul>
                     </div>
 
-                    <div :class="conta.temSenhaLocal ? 'col-lg-4' : 'col-lg-6'">
+                    <div :class="conta.temSenha ? 'col-lg-4' : 'col-lg-6'">
                       <label class="form-label">Confirme a nova senha</label>
                       <div class="position-relative">
                         <input v-model="formSenha.confirmacao" :type="mostrarConfirmacao ? 'text' : 'password'" class="form-control pe-5 campo-senha" placeholder="Repita a nova senha" @focus="confirmacaoEmFoco = true" @blur="confirmacaoEmFoco = false" />
@@ -206,10 +219,10 @@
                   <div v-if="erroSenha" class="alert alert-danger py-2 small mt-3">{{ erroSenha }}</div>
 
                   <div class="d-grid d-lg-flex justify-content-lg-end mt-3">
-                    <button class="btn btn-primary" :disabled="salvandoSenha">
+                    <button class="btn btn-primary" :disabled="salvandoSenha || !conta.emailVerificado">
                       {{ salvandoSenha
-                        ? (conta.temSenhaLocal ? 'Alterando...' : 'Definindo...')
-                        : (conta.temSenhaLocal ? 'Alterar senha' : 'Definir senha') }}
+                        ? (conta.temSenha ? 'Alterando...' : 'Definindo...')
+                        : (conta.temSenha ? 'Alterar senha' : 'Definir senha') }}
                     </button>
                   </div>
                 </form>
@@ -235,15 +248,15 @@
 
         <div class="alert alert-warning rounded-3 small mb-4" role="alert">
           <p class="fw-semibold mb-2">Antes de continuar, leia com atenção:</p>
-          <p :class="conta.temSenhaLocal ? 'mb-0' : 'mb-2'">
+          <p :class="conta.temSenha ? 'mb-0' : 'mb-2'">
             Ao excluir sua conta, <strong>todos os seus dados serão removidos permanentemente</strong> dos nossos servidores — sem possibilidade de recuperação.
           </p>
-          <p v-if="!conta.temSenhaLocal" class="mb-0">
+          <p v-if="!conta.temSenha" class="mb-0">
             Se você entrar com o Google novamente, uma <strong>conta completamente nova</strong> será criada do zero, sem nenhum vínculo, histórico ou configuração da conta atual.
           </p>
         </div>
 
-        <template v-if="conta.temSenhaLocal">
+        <template v-if="conta.temSenha">
           <div class="mb-4">
             <label class="form-label">Para confirmar, informe sua senha atual:</label>
             <div class="position-relative">
@@ -265,7 +278,7 @@
           <div class="form-check mb-4">
             <input class="form-check-input" type="checkbox" id="checkLeuExclusao" v-model="confirmouLeitura" />
             <label class="form-check-label small" for="checkLeuExclusao">
-              Li e compreendi as consequências da exclusão da minha conta.
+              Li e compreendi as consequências.
             </label>
           </div>
         </template>
@@ -277,7 +290,7 @@
           <button
             class="btn btn-danger"
             @click="confirmarExclusao"
-            :disabled="excluindo || (conta.temSenhaLocal ? !senhaExclusao : !confirmouLeitura)"
+            :disabled="excluindo || (conta.temSenha ? !senhaExclusao : !confirmouLeitura)"
           >
             {{ excluindo ? 'Excluindo...' : 'Excluir conta' }}
           </button>
@@ -338,7 +351,8 @@ import {
   deletarMinhaConta,
   desvincularGoogle,
   logout,
-  marcarSenhaLocalNaSessao,
+  marcarSenhaNaSessao,
+  reenviarConfirmacaoAlteracaoEmail,
   reenviarVerificacao,
   vincularGoogle
 } from '../services/autenticacaoService'
@@ -366,6 +380,11 @@ const erroEmail = ref('')
 const erroSenha = ref('')
 
 const reenviando = ref(false)
+const mensagemReenvioVerificacao = ref('')
+const erroReenvioVerificacao = ref('')
+const reenviandoAlteracaoEmail = ref(false)
+const mensagemReenvioAlteracaoEmail = ref('')
+const erroReenvioAlteracaoEmail = ref('')
 
 const googleVincularButtonRef = ref(null)
 const mensagemGoogle = ref('')
@@ -451,7 +470,6 @@ async function salvarNome() {
     conta.value = await atualizarMeuNome({ nome: formNome.nome.trim() })
     atualizarSessaoComConta(conta.value)
     mensagemNome.value = 'Nome atualizado com sucesso!'
-    setTimeout(() => window.location.reload(), 2400)
   } catch (e) {
     erroNome.value = extrairMensagemErro(e, 'Não foi possível atualizar o nome.')
     console.error(e)
@@ -469,7 +487,7 @@ async function salvarEmail() {
     conta.value = await atualizarMeuEmail({ email: formEmail.email.trim() })
     atualizarSessaoComConta(conta.value)
     if (conta.value.emailPendente) {
-      mensagemEmail.value = `Confirme a alteração no link enviado para ${conta.value.emailPendente}!`
+      mensagemEmail.value = `Verifique sua caixa de entrada!`
     } else {
       mensagemEmail.value = 'E-mail atualizado com sucesso.'
     }
@@ -482,14 +500,32 @@ async function salvarEmail() {
 }
 
 async function reenviarVerificacaoEmail() {
+  mensagemReenvioVerificacao.value = ''
+  erroReenvioVerificacao.value = ''
   reenviando.value = true
   try {
     await reenviarVerificacao()
     await carregarConta()
+    mensagemReenvioVerificacao.value = 'E-mail reenviado com sucesso!'
   } catch (e) {
-    erro.value = extrairMensagemErro(e, 'Não foi possível reenviar o e-mail de verificação.')
+    erroReenvioVerificacao.value = extrairMensagemErro(e, 'Não foi possível reenviar o e-mail de verificação.')
   } finally {
     reenviando.value = false
+  }
+}
+
+async function reenviarEmailAlteracao() {
+  mensagemReenvioAlteracaoEmail.value = ''
+  erroReenvioAlteracaoEmail.value = ''
+  reenviandoAlteracaoEmail.value = true
+  try {
+    await reenviarConfirmacaoAlteracaoEmail()
+    await carregarConta()
+    mensagemReenvioAlteracaoEmail.value = 'E-mail reenviado com sucesso!'
+  } catch (e) {
+    erroReenvioAlteracaoEmail.value = extrairMensagemErro(e, 'Não foi possível reenviar o e-mail de confirmação de alteração.')
+  } finally {
+    reenviandoAlteracaoEmail.value = false
   }
 }
 
@@ -511,7 +547,7 @@ async function salvarSenha() {
 
   try {
     const response = await atualizarMinhaSenha({
-      senhaAtual: conta.value.temSenhaLocal ? formSenha.senhaAtual : null,
+      senhaAtual: conta.value.temSenha ? formSenha.senhaAtual : null,
       novaSenha: formSenha.novaSenha
     })
 
@@ -521,11 +557,11 @@ async function salvarSenha() {
     formSenha.confirmacao = ''
 
     if (conta.value) {
-      conta.value.temSenhaLocal = true
+      conta.value.temSenha = true
       conta.value.dataAtualiza = new Date().toISOString()
     }
 
-    marcarSenhaLocalNaSessao()
+    marcarSenhaNaSessao()
     await carregarConta()
   } catch (e) {
     erroSenha.value = extrairMensagemErro(e, 'Não foi possível atualizar a senha.')
@@ -552,7 +588,7 @@ async function confirmarExclusao() {
   excluindo.value = true
 
   try {
-    await deletarMinhaConta(conta.value.temSenhaLocal ? { senha: senhaExclusao.value } : null)
+    await deletarMinhaConta(conta.value.temSenha ? { senha: senhaExclusao.value } : null)
     logout()
     router.push('/login')
   } catch (e) {

@@ -104,10 +104,11 @@ Manter esta tabela sempre atualizada ao criar, editar ou remover endpoints duran
 | GET | `/auth/me` | JWT | Retorna dados da conta autenticada |
 | PATCH | `/auth/me/nome` | JWT | Atualiza nome do usuário |
 | PATCH | `/auth/me/email` | JWT | Atualiza e-mail (bloqueado para contas com Google vinculado; sempre envia e-mail de confirmação para o novo endereço e salva em `emailPendente`) |
-| PATCH | `/auth/me/senha` | JWT | Atualiza ou define senha (bloqueado se e-mail não verificado e confirmação habilitada) |
+| PATCH | `/auth/me/senha` | JWT | Atualiza ou define senha (bloqueado se e-mail não verificado) |
 | DELETE | `/auth/me` | JWT | Exclui a conta do usuário autenticado (sempre permitido, independente do status de verificação) |
 | GET | `/auth/verificacao/confirmar` | Pública | Confirma e-mail via token (cadastro ou alteração de e-mail) |
 | POST | `/auth/verificacao/reenviar` | JWT | Reenvia e-mail de verificação de cadastro (cooldown de 2 min) |
+| POST | `/auth/verificacao/reenviar-alteracao-email` | JWT | Reenvia e-mail de confirmação de alteração de e-mail (cooldown de 2 min) |
 | GET/POST | `/setup/**` | Chave mestra | Configuração inicial da aplicação |
 
 ## Variáveis de Ambiente

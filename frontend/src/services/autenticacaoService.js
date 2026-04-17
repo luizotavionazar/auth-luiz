@@ -88,7 +88,7 @@ export function salvarSessao(loginResponse) {
     idUsuario: loginResponse.idUsuario,
     nome: loginResponse.nome,
     email: loginResponse.email,
-    temSenhaLocal: Boolean(loginResponse.temSenhaLocal),
+    temSenha: Boolean(loginResponse.temSenha),
     temLoginGoogle: Boolean(loginResponse.temLoginGoogle)
   }))
   localStorage.setItem(EXPIRES_AT_KEY, String(expiresAt))
@@ -102,18 +102,18 @@ export function atualizarSessaoComConta(conta) {
     idUsuario: conta.idUsuario,
     nome: conta.nome,
     email: conta.email,
-    temSenhaLocal: Boolean(conta.temSenhaLocal),
+    temSenha: Boolean(conta.temSenha),
     temLoginGoogle: Boolean(conta.temLoginGoogle)
   }))
 }
 
-export function marcarSenhaLocalNaSessao() {
+export function marcarSenhaNaSessao() {
   const usuarioAtual = getUsuarioLogado()
   if (!usuarioAtual) return
 
   localStorage.setItem(USER_KEY, JSON.stringify({
     ...usuarioAtual,
-    temSenhaLocal: true
+    temSenha: true
   }))
 }
 
@@ -166,6 +166,15 @@ export async function confirmarEmail(token) {
 
 export async function reenviarVerificacao() {
   const response = await authApi.post('/auth/verificacao/reenviar', {}, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`
+    }
+  })
+  return response.data
+}
+
+export async function reenviarConfirmacaoAlteracaoEmail() {
+  const response = await authApi.post('/auth/verificacao/reenviar-alteracao-email', {}, {
     headers: {
       Authorization: `Bearer ${getToken()}`
     }
