@@ -1,0 +1,7 @@
+# Editor
+.vscode/
+.DS_Store
+
+# Arquivos temporários
+*.zip
+*.rar
