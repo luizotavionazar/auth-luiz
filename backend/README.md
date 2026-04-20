@@ -8,7 +8,7 @@ API REST de autenticação construída com Spring Boot 3 e Java 21. Stateless, b
 - **Spring Security** — OAuth2 Resource Server (JWT), stateless
 - **PostgreSQL** + **Flyway** — banco relacional com migrações versionadas
 - **Argon2** — hash de senhas (via Spring Security)
-- **HMAC-SHA256 (Nimbus)** — assinatura dos JWTs
+- **RS256 / RSA assimétrico (Nimbus)** — assinatura dos JWTs; chave pública exposta via JWKS
 - **JavaMail** — envio de e-mail transacional
 - **BouncyCastle** — criptografia das credenciais SMTP no banco
 - **Lombok** — redução de boilerplate nas entidades e serviços
@@ -40,6 +40,8 @@ src/main/java/.../authluiz/
 │   │   ├── controller/ OAuthController      POST /auth/oauth/google
 │   │   │                                    POST/DELETE /auth/oauth/google/vincular
 │   │   └── dto/        GoogleLoginRequest, DesvincularGoogleRequest
+│   ├── jwks/
+│   │   └── JwksController               GET /auth/.well-known/jwks.json (público, sem auth)
 │   └── setup/
 │       ├── controller/ SetupController      GET/POST /setup/**
 │       └── dto/        SalvarSetupRequest, StatusSetupResponse,
@@ -48,7 +50,7 @@ src/main/java/.../authluiz/
 ├── config/
 │   ├── security/
 │   │   ├── SecurityConfig               Regras de autorização, CORS, OAuth2 resource server
-│   │   ├── SecurityBeansConfig          Beans: PasswordEncoder (Argon2), JwtEncoder/Decoder
+│   │   ├── SecurityBeansConfig          Beans: PasswordEncoder (Argon2), RSAPublicKey/RSAPrivateKey, JwtEncoder/Decoder (RS256)
 │   │   ├── JwtService                   Geração e leitura de JWTs
 │   │   ├── GoogleAudienceValidator      Validação do audience nos tokens do Google
 │   │   ├── JsonAuthenticationEntryPoint Resposta JSON para 401
@@ -113,14 +115,9 @@ src/main/java/.../authluiz/
 
 ## Migrações de banco (Flyway)
 
-| Arquivo                          | Conteúdo                                                   |
-|----------------------------------|------------------------------------------------------------|
-| `V1__authluiz_inicial.sql`       | Schema base: `usuario`, `tokenRecuperacaoSenha`, `configuracaoAplicacao` |
-| `V2__google_login_e_senha_local.sql` | `identidadeExterna`, `controleRecuperacaoSenha`        |
-| `V3__cascade_delete_usuario.sql` | `ON DELETE CASCADE` nas FKs para `usuario`                 |
-| `V4__confirmacao_email.sql`      | `emailVerificado`, `emailPendente`, `tokenConfirmacao`, `controleAlteracaoEmail`, `confirmacaoEmailHabilitada` em `configuracaoAplicacao` |
-| `V5__origem_cadastro.sql`        | `providerOrigem` em `usuario` — registra OAuth de origem  |
-| `V6__remove_confirmacao_email_flag.sql` | Remove coluna `confirmacaoEmailHabilitada` — confirmação de e-mail agora é sempre obrigatória |
+| Arquivo                      | Conteúdo                                                                 |
+|------------------------------|--------------------------------------------------------------------------|
+| `V1__schema_inicial.sql`     | Schema completo: `usuario`, `tokenRecuperacaoSenha`, `controleRecuperacaoSenha`, `configuracaoAplicacao`, `identidadeExterna`, `tokenConfirmacao`, `controleAlteracaoEmail` — com todos os `ON DELETE CASCADE` |
 
 > O DDL está em modo `validate`. Sempre crie um novo arquivo `V{n}__*.sql` para alterações no schema — nunca edite migrações existentes.
 
@@ -129,14 +126,17 @@ src/main/java/.../authluiz/
 Copie `backend/.env.example` para `backend/.env` e preencha:
 
 ```env
-APP_SETUP_MASTER_KEY=...        # chave para concluir o setup via POST /setup
-SPRING_DATASOURCE_URL=...       # jdbc:postgresql://host:5432/db
+APP_SETUP_MASTER_KEY=...          # chave para concluir o setup via POST /setup
+SPRING_DATASOURCE_URL=...         # jdbc:postgresql://host:5432/db
 SPRING_DATASOURCE_USERNAME=...
 SPRING_DATASOURCE_PASSWORD=...
-JWT_SECRET=...                  # chave HMAC-SHA256 (mínimo 32 chars)
+JWT_RSA_PRIVATE_KEY=...           # chave privada RSA em base64 (PKCS#8)
+JWT_RSA_PUBLIC_KEY=...            # chave pública RSA em base64 (X.509)
 JWT_EXPIRATION_MINUTES=120
-GOOGLE_OAUTH_CLIENT_ID=...      # client ID do Google Cloud Console
+GOOGLE_OAUTH_CLIENT_ID=...        # client ID do Google Cloud Console
 ```
+
+> Gere o par de chaves RSA executando `GerarChavesRSA.java` (disponível na raiz do backend). Consulte `backend/.env.example` para o procedimento completo.
 
 ## Rodando
 
@@ -175,3 +175,4 @@ docker compose -f ../compose-dev.yaml up -d
 | POST        | `/auth/verificacao/reenviar`       | JWT          | Reenvia e-mail de verificação de cadastro (cooldown: 2 min) |
 | POST        | `/auth/verificacao/reenviar-alteracao-email` | JWT | Reenvia e-mail de confirmação de alteração de e-mail (cooldown: 2 min) |
 | GET / POST  | `/setup/**`                        | Chave mestra | Configuração inicial                               |
+| GET         | `/auth/.well-known/jwks.json`      | Pública      | Chave pública RSA no formato JWKS (usado pelo PermissoesLuiz para validar JWTs) |

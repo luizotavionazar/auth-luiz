@@ -69,14 +69,14 @@ docker compose up --build
 **Fluxos principais:**
 
 - **Guarda de setup:** `SetupFilter` intercepta todas as requisições (exceto `/setup/**`) e redireciona para o setup se `configuracaoAplicacao.setupConcluido = false`. O setup é concluído via `POST /setup` usando `APP_SETUP_MASTER_KEY`.
-- **Autenticação:** Spring Security é stateless (sem sessões). O JWT é emitido pelo `JwtService` no login; todos os endpoints protegidos o validam via OAuth2 resource server (`spring-boot-starter-security-oauth2-resource-server`). O CORS está fixo para `http://localhost:5173`.
+- **Autenticação:** Spring Security é stateless (sem sessões). O JWT é emitido pelo `JwtService` no login usando **RS256** (RSA 2048-bit assimétrico); todos os endpoints protegidos o validam via OAuth2 resource server. A chave privada assina o token; a chave pública está exposta em `GET /auth/.well-known/jwks.json` para que outros serviços (ex: PermissoesLuiz) possam verificar tokens de forma autônoma. O CORS aceita `http://localhost:5173` e `http://localhost:5174` (PermissoesLuiz).
 - **Recuperação de senha:** Limitada por IP via `ControleRecuperacaoSenha`. Os tokens são hasheados antes de serem armazenados (`TokenRecuperacaoSenha`). A limpeza de tokens expirados é feita pelo `TokenRecuperacaoSenhaExpiracaoService`.
 - **Google OAuth:** O frontend obtém um Google ID token via Google Identity Services SDK; o backend valida (`GoogleIdTokenValidatorService`/`GoogleAudienceValidator`) e emite seu próprio JWT. O vínculo com Google é gerenciado na tela de conta (`POST /auth/oauth/google/vincular` e `DELETE /auth/oauth/google/vincular`); o login com Google nunca vincula automaticamente — retorna 409 se o e-mail já existe. Vinculação exige que o e-mail do Google seja idêntico ao da conta. Desvinculação exige senha definida e confirmação por senha via modal. **Contas criadas via Google (`providerOrigem = GOOGLE`) não podem ser desvinculadas**; o campo `providerOrigem` (nullable `ProviderExterno` enum) no `Usuario` registra qual provider originou o cadastro — null indica e-mail/senha, valor preenchido indica OAuth. Esse campo é extensível para futuros providers (Apple, GitHub, etc.).
 - **Configuração de e-mail:** As credenciais SMTP ficam criptografadas na tabela `configuracaoAplicacao` via `CriptografiaConfiguracaoService` (BouncyCastle). O `EmailService` as lê em tempo de execução.
 - **Envio de e-mail sempre assíncrono:** Todos os métodos públicos do `EmailService` são anotados com `@Async` — o envio ocorre em thread separada e nunca bloqueia a resposta HTTP. `@EnableAsync` está ativo na `AuthLuizApplication`. Ao adicionar novos métodos de envio ao `EmailService`, sempre incluir `@Async`.
 - **Confirmação de e-mail:** Sempre obrigatória — não há flag de configuração. Cadastro gera token de verificação (7 dias), usuário não confirmado não pode alterar e-mail nem senha; contas não confirmadas são removidas a cada hora pelo `ConfirmacaoEmailExpiracaoService` (`@Scheduled`). **Alteração de e-mail** usa `emailPendente` + token (30 min); o e-mail só é trocado após o clique no link. Rate limiting de alteração de e-mail por usuário via `ControleAlteracaoEmail` (máx. 5 por 1440 min, bloqueio de 1440 min). Cooldown de reenvio: 2 minutos (mesmo mecanismo do `TokenConfirmacaoService`). Tokens são hasheados via `TokenUtils.gerarHash()` antes de armazenar. `@EnableScheduling` está ativo na `AuthLuizApplication`.
 
-**Migrações de banco:** Flyway (`db/migration/V*.sql`). O schema usa identificadores camelCase entre aspas (Hibernate `PhysicalNamingStrategyStandardImpl` + `globally_quoted_identifiers=true`). O DDL está como `validate` — sempre crie um novo arquivo de migração para alterações no schema.
+**Migrações de banco:** Flyway (`db/migration/V*.sql`). O schema usa identificadores camelCase entre aspas (Hibernate `PhysicalNamingStrategyStandardImpl` + `globally_quoted_identifiers=true`). O DDL está como `validate` — sempre crie um novo arquivo de migração para alterações no schema. As migrations V1–V7 originais foram consolidadas em um único `V1__schema_inicial.sql` (schema final).
 
 **Testes:** Utilizam Testcontainers com uma instância real de Postgres (sem mocks).
 
@@ -111,6 +111,7 @@ Manter esta tabela sempre atualizada ao criar, editar ou remover endpoints duran
 | POST | `/auth/verificacao/reenviar` | JWT | Reenvia e-mail de verificação de cadastro (cooldown de 2 min) |
 | POST | `/auth/verificacao/reenviar-alteracao-email` | JWT | Reenvia e-mail de confirmação de alteração de e-mail (cooldown de 2 min) |
 | GET/POST | `/setup/**` | Chave mestra | Configuração inicial da aplicação |
+| GET | `/auth/.well-known/jwks.json` | Pública | Chave pública RSA em formato JWKS (usada por serviços externos para validar JWTs) |
 
 ## Variáveis de Ambiente
 
@@ -118,9 +119,19 @@ Consulte `backend/.env.example`. Variáveis obrigatórias:
 
 - `APP_SETUP_MASTER_KEY` — usada para concluir o setup inicial
 - `SPRING_DATASOURCE_URL/USERNAME/PASSWORD` — conexão com o Postgres
-- `JWT_SECRET` — chave de assinatura dos JWTs
+- `JWT_RSA_PRIVATE_KEY` — chave privada RSA (PKCS#8) em base64, usada para assinar JWTs (RS256)
+- `JWT_RSA_PUBLIC_KEY` — chave pública RSA em base64, exposta via JWKS e usada para verificar JWTs
 - `JWT_EXPIRATION_MINUTES` — padrão: 120
 - `GOOGLE_OAUTH_CLIENT_ID` — client ID do Google OAuth
+
+**Geração do par de chaves RSA:**
+```bash
+openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
+openssl rsa -in private.pem -pubout -out public.pem
+# Converter para base64 linha única (Linux/WSL):
+base64 -w 0 private.pem > private.b64
+base64 -w 0 public.pem > public.b64
+```
 
 ## Frontend como Implementação de Referência
 
@@ -129,6 +140,16 @@ O frontend incluído neste repositório é uma **implementação de referência*
 - O backend é independente de qualquer frontend específico.
 - O frontend que o desenvolvedor implementar pode exibir suas próprias mensagens com base nos status HTTP e na estrutura de resposta da API — não é obrigado a usar as mensagens retornadas pelo backend.
 - Regras de negócio e validações devem residir no backend; a camada de apresentação fica a cargo de cada frontend.
+
+## Ecossistema de Serviços
+
+Auth-Luiz é parte de um ecossistema de APIs reutilizáveis independentes:
+
+- **auth-luiz** — autenticação e identidade (este repositório): `github.com/luizotavionazar/auth-luiz`
+- **permissoes-luiz** — roles e permissões; verifica JWTs do Auth-Luiz via JWKS: `github.com/luizotavionazar/permissoes-luiz`
+- **luiz-stack** — orquestração Docker que sobe ambos os serviços juntos: `github.com/luizotavionazar/luiz-stack`
+
+O PermissoesLuiz usa `GET /auth/.well-known/jwks.json` para obter a chave pública e verificar tokens de forma autônoma — sem compartilhar segredos.
 
 ## Integridade Referencial com Usuário
 

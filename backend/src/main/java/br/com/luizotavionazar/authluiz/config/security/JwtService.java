@@ -3,7 +3,7 @@ package br.com.luizotavionazar.authluiz.config.security;
 import br.com.luizotavionazar.authluiz.domain.usuario.entity.Usuario;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +31,7 @@ public class JwtService {
                 .claim("name", usuario.getNome())
                 .build();
 
-        JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
+        JwsHeader header = JwsHeader.with(SignatureAlgorithm.RS256).build();
         return jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
     }
 

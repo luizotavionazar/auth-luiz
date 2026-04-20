@@ -7,7 +7,7 @@ API de autenticação pronta para reutilização, construída com Spring Boot e 
 ### Funcionalidades
 
 - Cadastro de conta com e-mail e senha
-- Login com JWT (HMAC-SHA256, stateless)
+- Login com JWT (RS256 assimétrico, stateless)
 - Login e vinculação de conta com Google (OAuth via Google Identity Services)
 - Confirmação de e-mail no cadastro e na alteração de e-mail
 - Recuperação e redefinição de senha por e-mail
@@ -34,7 +34,7 @@ O **backend** é o produto principal: uma API independente de frontend que qualq
 |-----------|-------------------------------------------------|
 | Backend   | Java 21, Spring Boot 3, Spring Security, Flyway |
 | Banco     | PostgreSQL                                      |
-| Tokens    | JWT HS256 (nimbus), Argon2 (senhas)             |
+| Tokens    | JWT RS256 (nimbus, RSA assimétrico), Argon2 (senhas) |
 | OAuth     | Google Identity Services                        |
 | E-mail    | JavaMail, credenciais criptografadas (BouncyCastle) |
 | Frontend  | Vue 3, Vite, Vue Router, Axios, Bootstrap 5     |
@@ -51,7 +51,7 @@ O **backend** é o produto principal: uma API independente de frontend que qualq
 
 ```bash
 cp backend/.env.example backend/.env
-# Edite backend/.env com as credenciais do banco, segredo JWT e client ID do Google
+# Edite backend/.env com as credenciais do banco, chaves RSA e client ID do Google
 ```
 
 ### 2. Subir banco de dados
@@ -100,9 +100,12 @@ docker compose up --build
 | `SPRING_DATASOURCE_URL`     | URL JDBC do PostgreSQL                 |
 | `SPRING_DATASOURCE_USERNAME`| Usuário do banco                       |
 | `SPRING_DATASOURCE_PASSWORD`| Senha do banco                         |
-| `JWT_SECRET`                | Chave de assinatura dos JWTs           |
+| `JWT_RSA_PRIVATE_KEY`       | Chave privada RSA em base64 (PKCS#8) — assina os JWTs |
+| `JWT_RSA_PUBLIC_KEY`        | Chave pública RSA em base64 (X.509) — valida os JWTs e exposta via JWKS |
 | `JWT_EXPIRATION_MINUTES`    | Expiração do token (padrão: 120)       |
 | `GOOGLE_OAUTH_CLIENT_ID`    | Client ID do Google OAuth              |
+
+> As chaves RSA podem ser geradas com o utilitário `GerarChavesRSA.java` incluso no backend. Consulte `backend/.env.example` para instruções.
 
 ### Frontend (`frontend/.env`)
 
@@ -110,3 +113,15 @@ docker compose up --build
 |-------------------------|----------------------------------------|
 | `VITE_API_BASE_URL`     | URL da API (padrão: `http://localhost:8080`) |
 | `VITE_GOOGLE_CLIENT_ID` | Client ID do Google OAuth              |
+
+## Ecossistema
+
+AuthLuiz é parte de uma stack maior composta por serviços independentes:
+
+| Serviço | Repositório | Descrição |
+|---------|-------------|-----------|
+| **AuthLuiz** | `github.com/luizotavionazar/auth-luiz` | Identidade e autenticação (este repo) |
+| **PermissoesLuiz** | `github.com/luizotavionazar/permissoes-luiz` | Roles, permissões e controle de acesso |
+| **LuizStack** | `github.com/luizotavionazar/luiz-stack` | Orquestração Docker dos dois serviços |
+
+A chave pública RSA do AuthLuiz é exposta em `GET /auth/.well-known/jwks.json`, permitindo que o PermissoesLuiz valide JWTs de forma autônoma sem compartilhar segredos.
