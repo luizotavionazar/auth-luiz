@@ -343,9 +343,9 @@
 </template>
 
 <script setup>
-import axios from 'axios'
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import api from '../services/api'
 import {
   atualizarMeuEmail,
   atualizarMeuNome,
@@ -450,9 +450,7 @@ const isPermAdmin = ref(false)
 
 async function verificarSeEAdmin() {
   try {
-    const response = await axios.get(`${PERM_LUIZ_URL}/me/admin`, {
-      headers: { Authorization: `Bearer ${getToken()}` }
-    })
+    const response = await api.get('/auth/me/perm-admin')
     isPermAdmin.value = response.data?.isAdmin === true
   } catch {
     isPermAdmin.value = false

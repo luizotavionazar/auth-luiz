@@ -31,6 +31,7 @@ services:
       JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES:-120}
       APP_SETUP_MASTER_KEY: ${AUTHLUIZ_SETUP_MASTER_KEY}
       GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID}
+      PERM_LUIZ_URL: http://permluiz-backend:8080
     ports:
       - "8080:8080"
     depends_on:

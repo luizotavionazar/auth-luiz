@@ -6,6 +6,7 @@ import br.com.luizotavionazar.authluiz.api.conta.dto.AtualizarEmailRequest;
 import br.com.luizotavionazar.authluiz.api.conta.dto.AtualizarNomeRequest;
 import br.com.luizotavionazar.authluiz.api.conta.dto.AtualizarSenhaRequest;
 import br.com.luizotavionazar.authluiz.api.conta.dto.DeletarContaRequest;
+import br.com.luizotavionazar.authluiz.domain.permluiz.PermLuizService;
 import br.com.luizotavionazar.authluiz.domain.usuario.service.ContaService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -20,12 +21,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/auth/me")
 @RequiredArgsConstructor
 public class ContaController {
 
     private final ContaService contaService;
+    private final PermLuizService permLuizService;
+
+    @GetMapping("/perm-admin")
+    public ResponseEntity<Map<String, Object>> isPermAdmin(@AuthenticationPrincipal Jwt jwt) {
+        boolean isAdmin = permLuizService.isAdmin(jwt.getTokenValue());
+        return ResponseEntity.ok(Map.of("isAdmin", isAdmin));
+    }
 
     @GetMapping
     public ResponseEntity<ContaResponse> minhaConta(@AuthenticationPrincipal Jwt jwt) {
