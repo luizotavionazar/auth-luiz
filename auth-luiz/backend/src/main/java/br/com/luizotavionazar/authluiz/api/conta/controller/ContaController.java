@@ -77,6 +77,7 @@ public class ContaController {
             @RequestBody(required = false) DeletarContaRequest request
     ) {
         Integer idUsuario = Integer.valueOf(jwt.getSubject());
+        permLuizService.notificarDelecaoUsuario(jwt.getTokenValue());
         contaService.deletarConta(idUsuario, request);
         return ResponseEntity.noContent().build();
     }

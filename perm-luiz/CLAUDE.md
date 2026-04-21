@@ -98,7 +98,8 @@ Manter esta tabela sempre atualizada ao criar, editar ou remover endpoints duran
 |--------|---------|--------------|-----------|
 | GET | `/setup` | Pública | Retorna `{ "adminConfigurado": true/false }` |
 | GET | `/me/roles` | JWT | Retorna os roles e permissões do usuário autenticado |
-| GET | `/me/admin` | JWT | Retorna `{ "isAdmin": true/false }` — se o usuário é admin mestre |
+| GET | `/me/admin` | JWT | Retorna `{ "isAdmin": true/false }` — se o usuário é admin mestre; auto-promove o primeiro usuário |
+| DELETE | `/me/admin` | JWT | Reseta `idAdminMestre` se o chamador for o admin atual (chamado pelo AuthLuiz ao deletar conta) |
 | GET | `/admin/roles` | JWT+Admin | Lista todos os roles |
 | POST | `/admin/roles` | JWT+Admin | Cria role |
 | PUT | `/admin/roles/{id}` | JWT+Admin | Atualiza role |

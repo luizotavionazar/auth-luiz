@@ -74,7 +74,7 @@ npm run preview  # pré-visualização do build de produção
 - Vinculação de conta Google (exige e-mail idêntico ao da conta)
 - Desvinculação de conta Google com confirmação de senha (bloqueada para contas criadas via Google)
 - Exclusão de conta com confirmação de senha
-- **Botão "Painel de Permissões"** — visível somente ao admin mestre do PermLuiz (verificado via `GET /me/admin`); abre o PermLuiz passando o JWT no fragment da URL (`#token=<jwt>`)
+- **Botão "Painel de Controle"** — visível somente ao admin mestre do PermLuiz (verificado via `GET /me/admin`); abre o PermLuiz passando o JWT no fragment da URL (`#token=<jwt>`)
 
 ### Setup inicial
 

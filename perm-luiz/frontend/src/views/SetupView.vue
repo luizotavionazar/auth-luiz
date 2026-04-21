@@ -11,7 +11,7 @@ import { AUTH_LUIZ_URL } from '../services/api'
         <p class="text-muted small mb-4">Acesso restrito ao administrador</p>
 
         <p class="text-muted small">
-          Faça login no <strong>AuthLuiz</strong> e acesse o painel de permissões diretamente pela sua conta.
+          Faça login no <strong>AuthLuiz</strong> e acesse o painel de controle diretamente pela sua conta.
         </p>
 
         <a :href="AUTH_LUIZ_URL" class="btn btn-dark w-100 mt-3">

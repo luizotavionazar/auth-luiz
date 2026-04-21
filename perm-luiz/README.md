@@ -73,7 +73,7 @@ npm run dev
 
 ### 5. Primeiro acesso
 
-Cadastre-se no AuthLuiz. Na tela de conta, clique em **Painel de Permissões** — o JWT é passado automaticamente ao PermLuiz via URL fragment. O primeiro usuário autenticado a acessar qualquer página `/admin/**` é promovido automaticamente a admin mestre.
+Cadastre-se no AuthLuiz. Na tela de conta, clique em **Painel de Controle** — o JWT é passado automaticamente ao PermLuiz via URL fragment. O primeiro usuário autenticado a acessar qualquer página `/admin/**` é promovido automaticamente a admin mestre.
 
 ### Stack completa (produção)
 

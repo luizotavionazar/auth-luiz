@@ -16,6 +16,20 @@ public class PermLuizService {
 
     private final RestClient restClient = RestClient.create();
 
+    public void notificarDelecaoUsuario(String token) {
+        if (permLuizUrl == null || permLuizUrl.isBlank()) {
+            return;
+        }
+        try {
+            restClient.delete()
+                    .uri(permLuizUrl + "/me/admin")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception ignored) {
+        }
+    }
+
     public boolean isAdmin(String token) {
         if (permLuizUrl == null || permLuizUrl.isBlank()) {
             return false;

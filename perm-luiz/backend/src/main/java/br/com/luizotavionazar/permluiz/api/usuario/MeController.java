@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,6 +35,11 @@ public class MeController {
             }
             throw e;
         }
+    }
+
+    @DeleteMapping("/admin")
+    void resetarAdmin(@AuthenticationPrincipal Jwt jwt) {
+        adminVerificador.resetarAdmin(jwt);
     }
 
     @GetMapping("/roles")

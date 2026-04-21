@@ -25,6 +25,11 @@
       "name": "google.oauth.client-id",
       "type": "java.lang.String",
       "description": "Client ID do Google OAuth usado para validar Google ID tokens no fluxo de login social."
+    },
+    {
+      "name": "perm.luiz.url",
+      "type": "java.lang.String",
+      "description": "URL base da API do PermLuiz usada para notificações e verificação de permissões."
     }
   ]
 }

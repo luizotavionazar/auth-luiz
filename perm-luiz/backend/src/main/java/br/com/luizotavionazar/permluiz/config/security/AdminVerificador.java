@@ -42,4 +42,15 @@ public class AdminVerificador {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso restrito ao admin mestre!");
         }
     }
+
+    @Transactional
+    public void resetarAdmin(Jwt jwt) {
+        Long idUsuario = extrairIdUsuario(jwt);
+        configuracaoRepository.findById(1L).ifPresent(config -> {
+            if (idUsuario.equals(config.getIdAdminMestre())) {
+                config.setIdAdminMestre(null);
+                configuracaoRepository.save(config);
+            }
+        });
+    }
 }

@@ -7,7 +7,7 @@
           <p class="text-muted mb-0">Gerencie seus dados, suas formas de acesso e a senha da AuthLuiz.</p>
         </div>
         <div class="d-flex gap-2 align-self-start align-self-md-center">
-          <button v-if="isPermAdmin" class="btn btn-outline-secondary" @click="abrirPermLuiz">Painel de Permissões</button>
+          <button v-if="isPermAdmin" class="btn btn-outline-secondary" @click="abrirPermLuiz">Painel de Controle</button>
           <button class="btn btn-outline-danger" @click="sair">Sair</button>
         </div>
       </div>
