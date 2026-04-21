@@ -8,6 +8,8 @@ LuizStack é o repositório de orquestração Docker da stack completa formada p
 
 Este repositório **não contém código de aplicação** — apenas configuração de infraestrutura. O código de cada serviço vive nos seus próprios repositórios.
 
+Inclui também o **pgAdmin** como ferramenta de administração visual dos bancos de dados PostgreSQL, acessível em http://localhost:5050.
+
 ## Ecossistema de Serviços
 
 | Serviço | Repositório | Descrição |
@@ -20,7 +22,7 @@ Este repositório **não contém código de aplicação** — apenas configuraç
 
 ```
 luiz-stack/
-├── compose.yaml     ← sobe todos os 6 serviços (2 backends + 2 frontends + 2 bancos)
+├── compose.yaml     ← sobe todos os 7 serviços (2 backends + 2 frontends + 2 bancos + pgAdmin)
 ├── .env.example     ← template com todas as variáveis necessárias
 ├── .env             ← variáveis reais (não commitado)
 ├── .gitignore
@@ -59,6 +61,10 @@ Consulte `.env.example`. Variáveis obrigatórias:
 **PermLuiz:**
 - `PERMLUIZ_DB_USER` / `PERMLUIZ_DB_PASSWORD` — credenciais do banco do PermLuiz
 - `PERMLUIZ_SETUP_MASTER_KEY` — chave mestra do setup do PermLuiz
+
+**pgAdmin:**
+- `PGADMIN_EMAIL` — e-mail de login do pgAdmin (ex: `admin@admin.com`)
+- `PGADMIN_PASSWORD` — senha de login do pgAdmin
 
 > `AUTH_LUIZ_JWKS_URI` é injetada diretamente pelo `compose.yaml` com o hostname interno do Docker — não precisa estar no `.env`.
 
@@ -102,8 +108,20 @@ docker compose down -v
 | `authluiz-frontend` | `80` | Frontend do AuthLuiz |
 | `permluiz-backend` | `8081` | API de autorização |
 | `permluiz-frontend` | `81` | Frontend do PermLuiz |
-| `authluiz-db` | interno | PostgreSQL do AuthLuiz |
-| `permluiz-db` | interno | PostgreSQL do PermLuiz |
+| `authluiz-db` | `5432` | PostgreSQL do AuthLuiz |
+| `permluiz-db` | `5433` | PostgreSQL do PermLuiz |
+| `pgadmin` | `5050` | Interface web de administração dos bancos |
+
+### Conexão dos bancos no pgAdmin
+
+Acesse http://localhost:5050 e adicione os servidores com os dados abaixo (os hostnames são internos ao Docker):
+
+| Campo | authluiz-db | permluiz-db |
+|-------|-------------|-------------|
+| Host | `authluiz-db` | `permluiz-db` |
+| Port | `5432` | `5432` |
+| Database | `authluiz` | `permluiz` |
+| Username | `AUTHLUIZ_DB_USER` | `PERMLUIZ_DB_USER` |
 
 ## Dependências de Inicialização
 
@@ -113,6 +131,7 @@ O `compose.yaml` garante a ordem correta via `depends_on` com `condition: servic
 3. `permluiz-db` → healthcheck pg_isready
 4. `permluiz-backend` → depende de `permluiz-db` e `authluiz-backend`
 5. Frontends → dependem dos respectivos backends
+6. `pgadmin` → depende de `authluiz-db` e `permluiz-db`
 
 ## Fluxo de Trabalho com Claude
 

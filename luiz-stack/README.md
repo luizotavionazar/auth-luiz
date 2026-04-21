@@ -8,10 +8,11 @@ Orquestração Docker da stack completa formada por AuthLuiz e PermLuiz. Com um 
 |---------|-------|-------------|
 | **authluiz-backend** | `8080` | `github.com/luizotavionazar/auth-luiz` |
 | **authluiz-frontend** | `80` | `github.com/luizotavionazar/auth-luiz` |
-| **authluiz-db** | interno | PostgreSQL do AuthLuiz |
+| **authluiz-db** | `5432` | PostgreSQL do AuthLuiz |
 | **permluiz-backend** | `8081` | `github.com/luizotavionazar/perm-luiz` |
 | **permluiz-frontend** | `81` | `github.com/luizotavionazar/perm-luiz` |
-| **permluiz-db** | interno | PostgreSQL do PermLuiz |
+| **permluiz-db** | `5433` | PostgreSQL do PermLuiz |
+| **pgadmin** | `5050` | Interface web de administração dos bancos |
 
 Todos os serviços compartilham a rede `luiz-network`. O PermLuiz busca a chave pública do AuthLuiz via JWKS na rede interna — sem expor segredos.
 
@@ -54,6 +55,13 @@ cp .env.example .env
 | `PERMLUIZ_DB_PASSWORD`     | Senha do banco do PermLuiz             |
 | `PERMLUIZ_SETUP_MASTER_KEY`| Chave mestra do setup do PermLuiz      |
 
+#### pgAdmin
+
+| Variável           | Descrição                        |
+|--------------------|----------------------------------|
+| `PGADMIN_EMAIL`    | E-mail de login do pgAdmin       |
+| `PGADMIN_PASSWORD` | Senha de login do pgAdmin        |
+
 > A `AUTH_LUIZ_JWKS_URI` é injetada automaticamente pelo `compose.yaml` — não precisa estar no `.env`.
 
 > As chaves RSA são compartilhadas entre AuthLuiz e qualquer serviço que precise validar JWTs. Gere-as uma vez com `GerarChavesRSA.java` (no repositório do AuthLuiz).
@@ -74,6 +82,19 @@ docker compose down
 docker compose down -v
 ```
 
+## Acesso aos bancos de dados
+
+O pgAdmin está disponível em **http://localhost:5050**. Após login, adicione os servidores usando os nomes dos containers como host (eles compartilham a rede Docker interna `luiz-network`):
+
+| Campo    | authluiz-db        | permluiz-db        |
+|----------|--------------------|--------------------|
+| Host     | `authluiz-db`      | `permluiz-db`      |
+| Port     | `5432`             | `5432`             |
+| Database | `authluiz`         | `permluiz`         |
+| Username | `AUTHLUIZ_DB_USER` | `PERMLUIZ_DB_USER` |
+
+Para conexão via cliente externo (DBeaver, psql, etc.), use `localhost:5432` para o AuthLuiz e `localhost:5433` para o PermLuiz.
+
 ## Fluxo de funcionamento
 
 1. `authluiz-db` sobe e passa o healthcheck
@@ -82,3 +103,4 @@ docker compose down -v
 4. `permluiz-backend` sobe, aplica migrations Flyway, expõe `:8081`
    - Busca e cacheia a chave pública via `http://authluiz-backend:8080/auth/.well-known/jwks.json`
 5. Frontends sobem e servem via nginx em `:80` e `:81`
+6. `pgadmin` sobe e fica disponível em `:5050`

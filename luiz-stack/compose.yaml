@@ -5,13 +5,15 @@ services:
     container_name: authluiz-db
     environment:
       POSTGRES_DB: authluiz
-      POSTGRES_USER: ${AUTHLUIZ_DB_USER:-authluiz}
-      POSTGRES_PASSWORD: ${AUTHLUIZ_DB_PASSWORD:-authluiz}
+      POSTGRES_USER: ${AUTHLUIZ_DB_USER}
+      POSTGRES_PASSWORD: ${AUTHLUIZ_DB_PASSWORD}
+    ports:
+      - "5432:5432"
     volumes:
       - authluiz-pgdata:/var/lib/postgresql/data
     networks: [luiz-network]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${AUTHLUIZ_DB_USER:-authluiz} -d authluiz"]
+      test: ["CMD-SHELL", "pg_isready -U ${AUTHLUIZ_DB_USER} -d authluiz"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -22,8 +24,8 @@ services:
     container_name: authluiz-backend
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://authluiz-db:5432/authluiz
-      SPRING_DATASOURCE_USERNAME: ${AUTHLUIZ_DB_USER:-authluiz}
-      SPRING_DATASOURCE_PASSWORD: ${AUTHLUIZ_DB_PASSWORD:-authluiz}
+      SPRING_DATASOURCE_USERNAME: ${AUTHLUIZ_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${AUTHLUIZ_DB_PASSWORD}
       JWT_RSA_PRIVATE_KEY: ${JWT_RSA_PRIVATE_KEY}
       JWT_RSA_PUBLIC_KEY: ${JWT_RSA_PUBLIC_KEY}
       JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES:-120}
@@ -52,13 +54,15 @@ services:
     container_name: permluiz-db
     environment:
       POSTGRES_DB: permluiz
-      POSTGRES_USER: ${PERMLUIZ_DB_USER:-permluiz}
-      POSTGRES_PASSWORD: ${PERMLUIZ_DB_PASSWORD:-permluiz}
+      POSTGRES_USER: ${PERMLUIZ_DB_USER}
+      POSTGRES_PASSWORD: ${PERMLUIZ_DB_PASSWORD}
+    ports:
+      - "5433:5432"
     volumes:
       - permluiz-pgdata:/var/lib/postgresql/data
     networks: [luiz-network]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PERMLUIZ_DB_USER:-permluiz} -d permluiz"]
+      test: ["CMD-SHELL", "pg_isready -U ${PERMLUIZ_DB_USER} -d permluiz"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -69,8 +73,8 @@ services:
     container_name: permluiz-backend
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://permluiz-db:5432/permluiz
-      SPRING_DATASOURCE_USERNAME: ${PERMLUIZ_DB_USER:-permluiz}
-      SPRING_DATASOURCE_PASSWORD: ${PERMLUIZ_DB_PASSWORD:-permluiz}
+      SPRING_DATASOURCE_USERNAME: ${PERMLUIZ_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${PERMLUIZ_DB_PASSWORD}
       AUTH_LUIZ_JWKS_URI: http://authluiz-backend:8080/auth/.well-known/jwks.json
       APP_SETUP_MASTER_KEY: ${PERMLUIZ_SETUP_MASTER_KEY}
     ports:
@@ -90,6 +94,20 @@ services:
       - "81:80"
     depends_on:
       - permluiz-backend
+    networks: [luiz-network]
+
+  # ── pgAdmin ────────────────────────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "5050:80"
+    depends_on:
+      - authluiz-db
+      - permluiz-db
     networks: [luiz-network]
 
 volumes:
