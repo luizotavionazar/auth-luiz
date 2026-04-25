@@ -134,6 +134,7 @@ JWT_RSA_PRIVATE_KEY=...           # chave privada RSA em base64 (PKCS#8)
 JWT_RSA_PUBLIC_KEY=...            # chave pública RSA em base64 (X.509)
 JWT_EXPIRATION_MINUTES=120
 GOOGLE_OAUTH_CLIENT_ID=...        # client ID do Google Cloud Console
+AUTH_LUIZ_SERVICE_KEY=...         # chave compartilhada com o PermLuiz para chamadas internas
 ```
 
 > Gere o par de chaves RSA executando `GerarChavesRSA.java` (disponível na raiz do backend). Consulte `backend/.env.example` para o procedimento completo.
@@ -176,3 +177,4 @@ docker compose -f ../compose-dev.yaml up -d
 | POST        | `/auth/verificacao/reenviar-alteracao-email` | JWT | Reenvia e-mail de confirmação de alteração de e-mail (cooldown: 2 min) |
 | GET / POST  | `/setup/**`                        | Chave mestra | Configuração inicial                               |
 | GET         | `/auth/.well-known/jwks.json`      | Pública      | Chave pública RSA no formato JWKS (usado pelo PermLuiz para validar JWTs) |
+| GET         | `/auth/interno/usuarios`           | X-Service-Key | Lista todos os usuários — endpoint server-to-server, não aceita JWT |

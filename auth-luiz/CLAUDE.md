@@ -113,6 +113,7 @@ Manter esta tabela sempre atualizada ao criar, editar ou remover endpoints duran
 | POST | `/auth/verificacao/reenviar-alteracao-email` | JWT | Reenvia e-mail de confirmação de alteração de e-mail (cooldown de 2 min) |
 | GET/POST | `/setup/**` | Chave mestra | Configuração inicial da aplicação |
 | GET | `/auth/.well-known/jwks.json` | Pública | Chave pública RSA em formato JWKS (usada por serviços externos para validar JWTs) |
+| GET | `/auth/interno/usuarios` | X-Service-Key | Lista todos os usuários — endpoint server-to-server, protegido por header `X-Service-Key` (não aceita JWT) |
 
 ## Variáveis de Ambiente
 
@@ -124,6 +125,7 @@ Consulte `backend/.env.example`. Variáveis obrigatórias:
 - `JWT_RSA_PUBLIC_KEY` — chave pública RSA em base64, exposta via JWKS e usada para verificar JWTs
 - `JWT_EXPIRATION_MINUTES` — padrão: 120
 - `GOOGLE_OAUTH_CLIENT_ID` — client ID do Google OAuth
+- `AUTH_LUIZ_SERVICE_KEY` — chave compartilhada com o PermLuiz para autenticar chamadas internas (`/auth/interno/**`)
 
 **Geração do par de chaves RSA:**
 ```bash

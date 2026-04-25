@@ -12,6 +12,9 @@ public interface UsuarioRoleRepository extends JpaRepository<UsuarioRole, Usuari
     @Query("SELECT ur FROM UsuarioRole ur JOIN FETCH ur.role r LEFT JOIN FETCH r.permissoes WHERE ur.idUsuario = :idUsuario")
     List<UsuarioRole> findByIdUsuarioWithRolesAndPermissoes(Long idUsuario);
 
+    @Query("SELECT ur FROM UsuarioRole ur JOIN FETCH ur.role")
+    List<UsuarioRole> findAllWithRoles();
+
     List<UsuarioRole> findByIdUsuario(Long idUsuario);
 
     void deleteByIdUsuarioAndIdRole(Long idUsuario, Long idRole);

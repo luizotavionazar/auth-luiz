@@ -80,8 +80,9 @@ npm run preview  # pré-visualização do build de produção
 
 ### Admin — Usuários (`AdminUsuariosView`)
 
-- Consulta dos roles atribuídos a qualquer usuário pelo ID
-- Atribuição e remoção de roles
+- Listagem de todos os usuários do sistema (buscados via `GET /admin/usuarios`, que por sua vez chama o AuthLuiz)
+- Tabela com nome, email, roles atuais e data de cadastro
+- Modal por usuário para atribuir e remover roles
 
 ## Comportamento dos guards de rota
 

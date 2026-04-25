@@ -30,6 +30,11 @@
       "name": "perm.luiz.url",
       "type": "java.lang.String",
       "description": "URL base da API do PermLuiz usada para notificações e verificação de permissões."
+    },
+    {
+      "name": "auth.service.key",
+      "type": "java.lang.String",
+      "description": "Chave compartilhada com o PermLuiz para autenticar chamadas server-to-server em /auth/interno/**."
     }
   ]
 }

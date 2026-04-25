@@ -24,9 +24,11 @@ src/main/java/.../permluiz/
 │   │   │                            GET/PUT /admin/roles/{id}/permissoes
 │   │   ├── AdminPermissaoController GET/POST /admin/permissoes
 │   │   │                            PUT/DELETE /admin/permissoes/{id}
-│   │   ├── AdminUsuarioController   GET /admin/usuarios/{id}/roles
+│   │   ├── AdminUsuarioController   GET /admin/usuarios (lista todos com roles via AuthLuiz)
+│   │   │                            GET /admin/usuarios/{id}/roles
 │   │   │                            POST/DELETE /admin/usuarios/{id}/roles/{roleId}
-│   │   └── dto/                     RoleRequest/Response, PermissaoRequest/Response
+│   │   └── dto/                     RoleRequest/Response, PermissaoRequest/Response,
+│   │                                UsuarioComRolesResponse
 │   ├── setup/
 │   │   ├── SetupController          GET /setup
 │   │   └── SetupService             Retorna adminConfigurado (idAdminMestre != null)
@@ -54,6 +56,10 @@ src/main/java/.../permluiz/
 │       │            UsuarioRoleId           Chave composta: idUsuario + idRole
 │       └── UsuarioRoleRepository
 │
+└── infra/
+    ├── AuthLuizClient       Chamada server-to-server para AuthLuiz (X-Service-Key)
+    └── UsuarioAuthResponse  DTO do usuário retornado pelo AuthLuiz
+│
 └── PermLuizApplication.java
 ```
 
@@ -74,6 +80,8 @@ SPRING_DATASOURCE_URL=...          # jdbc:postgresql://host:5432/permluiz
 SPRING_DATASOURCE_USERNAME=...
 SPRING_DATASOURCE_PASSWORD=...
 AUTH_LUIZ_JWKS_URI=...             # http://localhost:8080/auth/.well-known/jwks.json
+AUTH_LUIZ_BASE_URL=...             # http://localhost:8080
+AUTH_LUIZ_SERVICE_KEY=...          # chave compartilhada com o AuthLuiz (mesma em ambos)
 ```
 
 ## Rodando
@@ -121,6 +129,7 @@ docker compose -f ../compose-dev.yaml up -d
 | POST   | `/admin/permissoes`                   | JWT+Admin | Cria permissão (`recurso` + `acao`)    |
 | PUT    | `/admin/permissoes/{id}`              | JWT+Admin | Atualiza permissão                     |
 | DELETE | `/admin/permissoes/{id}`              | JWT+Admin | Remove permissão                       |
+| GET    | `/admin/usuarios`                     | JWT+Admin | Lista todos os usuários (via AuthLuiz) com seus roles |
 | GET    | `/admin/usuarios/{id}/roles`          | JWT+Admin | Lista roles de um usuário              |
 | POST   | `/admin/usuarios/{id}/roles`          | JWT+Admin | Atribui role ao usuário                |
 | DELETE | `/admin/usuarios/{id}/roles/{roleId}` | JWT+Admin | Remove role do usuário                 |

@@ -38,7 +38,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/setup/**", "/error", "/auth/.well-known/**").permitAll()
+                        .requestMatchers("/setup/**", "/error", "/auth/.well-known/**", "/auth/interno/**").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/auth/cadastro",
                                 "/auth/login",

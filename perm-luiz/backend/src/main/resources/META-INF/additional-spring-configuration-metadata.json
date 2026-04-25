@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "auth.luiz.base-url",
+      "type": "java.lang.String",
+      "description": "URL base da API do AuthLuiz usada para chamadas server-to-server (ex: buscar lista de usuários)."
+    },
+    {
+      "name": "auth.luiz.service-key",
+      "type": "java.lang.String",
+      "description": "Chave compartilhada com o AuthLuiz para autenticar chamadas server-to-server via header X-Service-Key."
+    }
+  ]
+}

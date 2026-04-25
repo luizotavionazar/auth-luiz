@@ -6,6 +6,8 @@ import br.com.luizotavionazar.permluiz.domain.role.entity.Role;
 import br.com.luizotavionazar.permluiz.domain.usuariorole.UsuarioRoleRepository;
 import br.com.luizotavionazar.permluiz.domain.usuariorole.entity.UsuarioRole;
 import br.com.luizotavionazar.permluiz.domain.usuariorole.entity.UsuarioRoleId;
+import br.com.luizotavionazar.permluiz.infra.AuthLuizClient;
+import br.com.luizotavionazar.permluiz.infra.UsuarioAuthResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/admin/usuarios")
@@ -25,6 +28,30 @@ public class AdminUsuarioController {
     private final UsuarioRoleRepository usuarioRoleRepository;
     private final RoleRepository roleRepository;
     private final AdminVerificador adminVerificador;
+    private final AuthLuizClient authLuizClient;
+
+    @GetMapping
+    List<UsuarioComRolesResponse> listarUsuarios(@AuthenticationPrincipal Jwt jwt) {
+        adminVerificador.exigirAdmin(jwt);
+
+        List<UsuarioAuthResponse> usuarios = authLuizClient.buscarTodosUsuarios();
+
+        Map<Long, List<RoleResponse>> rolesPorUsuario = usuarioRoleRepository.findAllWithRoles().stream()
+                .collect(Collectors.groupingBy(
+                        UsuarioRole::getIdUsuario,
+                        Collectors.mapping(ur -> RoleResponse.de(ur.getRole()), Collectors.toList())
+                ));
+
+        return usuarios.stream()
+                .map(u -> new UsuarioComRolesResponse(
+                        u.id(),
+                        u.nome(),
+                        u.email(),
+                        u.dataCriacao(),
+                        rolesPorUsuario.getOrDefault(u.id(), List.of())
+                ))
+                .toList();
+    }
 
     @GetMapping("/{idUsuario}/roles")
     List<RoleResponse> listarRoles(@AuthenticationPrincipal Jwt jwt, @PathVariable Long idUsuario) {

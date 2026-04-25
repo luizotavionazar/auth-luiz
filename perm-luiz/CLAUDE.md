@@ -16,6 +16,8 @@ PermLuiz é uma API de controle de acesso (roles e permissões) construída com 
 
 O PermLuiz valida JWTs automaticamente buscando a chave pública do AuthLuiz via `AUTH_LUIZ_JWKS_URI`. O Spring Security cacheia essa chave — não há segredo compartilhado.
 
+O PermLuiz também faz uma chamada server-to-server ao AuthLuiz para listar usuários (`GET /auth/interno/usuarios`), autenticada via header `X-Service-Key` (chave compartilhada entre os serviços via `AUTH_LUIZ_SERVICE_KEY`). Essa chamada é feita pelo `AuthLuizClient` (`infra/`) sempre que o admin acessa `GET /admin/usuarios`.
+
 ## Configuração do Ambiente
 
 ### Pré-requisitos
@@ -110,6 +112,7 @@ Manter esta tabela sempre atualizada ao criar, editar ou remover endpoints duran
 | POST | `/admin/permissoes` | JWT+Admin | Cria permissão |
 | PUT | `/admin/permissoes/{id}` | JWT+Admin | Atualiza permissão |
 | DELETE | `/admin/permissoes/{id}` | JWT+Admin | Remove permissão |
+| GET | `/admin/usuarios` | JWT+Admin | Lista todos os usuários (busca no AuthLuiz via service key) com seus roles |
 | GET | `/admin/usuarios/{id}/roles` | JWT+Admin | Lista roles de um usuário |
 | POST | `/admin/usuarios/{id}/roles` | JWT+Admin | Atribui role ao usuário |
 | DELETE | `/admin/usuarios/{id}/roles/{roleId}` | JWT+Admin | Remove role do usuário |
@@ -120,6 +123,8 @@ Consulte `backend/.env.example`. Variáveis obrigatórias:
 
 - `SPRING_DATASOURCE_URL/USERNAME/PASSWORD` — conexão com o Postgres
 - `AUTH_LUIZ_JWKS_URI` — URI do JWKS do AuthLuiz para validação dos JWTs
+- `AUTH_LUIZ_BASE_URL` — URL base do AuthLuiz para chamadas server-to-server (ex: `http://authluiz-backend:8080`)
+- `AUTH_LUIZ_SERVICE_KEY` — chave compartilhada com o AuthLuiz para autenticar chamadas internas
 
 ## Frontend como Implementação de Referência
 
