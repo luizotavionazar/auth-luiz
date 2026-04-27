@@ -57,19 +57,20 @@ npm run preview  # pré-visualização do build de produção
 
 ### Autenticação
 
-- Cadastro com e-mail e senha
+- Cadastro com e-mail, senha e telefone (opcional)
 - Login local (e-mail + senha)
 - Login com Google (Google Identity Services)
 - Recuperação e redefinição de senha por e-mail
 
 ### Conta autenticada (`ContaView`)
 
-- Visualização dos dados da conta
+- Visualização dos dados da conta (nome, e-mail e telefone)
 - Alteração de nome
 - Alteração de e-mail (sempre exige confirmação; bloqueada para contas com Google vinculado)
 - Reenvio de e-mail de confirmação de alteração de e-mail (com botão no alerta de pendência)
 - Troca de senha
 - Definição de senha para contas criadas via Google
+- Atualização ou remoção de telefone
 - Reenvio de e-mail de verificação de cadastro
 - Vinculação de conta Google (exige e-mail idêntico ao da conta)
 - Desvinculação de conta Google com confirmação de senha (bloqueada para contas criadas via Google)

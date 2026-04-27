@@ -2,10 +2,11 @@ package br.com.luizotavionazar.authluiz.domain.notificacao.service;
 
 import br.com.luizotavionazar.authluiz.domain.configuracao.entity.ConfiguracaoAplicacao;
 import br.com.luizotavionazar.authluiz.domain.configuracao.service.SetupService;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,111 +20,169 @@ public class EmailService {
     private final SetupService setupService;
 
     @Async
-    public void enviarBoasVindas(String nome, String email) {
-        ConfiguracaoAplicacao config = validarSetupEmail();
-
-        SimpleMailMessage mensagem = new SimpleMailMessage();
-        mensagem.setFrom(config.getMailFrom());
-        mensagem.setTo(email);
-        mensagem.setSubject("Bem-vindo ao AuthLuiz!");
-
-        String corpo = """
-                Olá, %s!
-
-                Sua conta no AuthLuiz foi criada com sucesso.
-
-                Você já pode acessar sua conta em:
-                %s/login
-
-                Seja bem-vindo!
-                """.formatted(nome, config.getFrontendBaseUrl());
-
-        mensagem.setText(corpo);
-        criarMailSender(config).send(mensagem);
-    }
-
-    @Async
     public void enviarVerificacaoCadastro(String nome, String email, String token) {
         ConfiguracaoAplicacao config = validarSetupEmail();
-
-        SimpleMailMessage mensagem = new SimpleMailMessage();
-        mensagem.setFrom(config.getMailFrom());
-        mensagem.setTo(email);
-        mensagem.setSubject("Verifique seu e-mail - AuthLuiz");
 
         String link = config.getFrontendBaseUrl() + "/verificar-email?token=" + token;
 
         String corpo = """
-                Olá, %s! Bem-vindo ao AuthLuiz!
+                <p style="margin:0 0 12px;">Olá, <strong>%s</strong>!</p>
+                <p style="margin:0 0 24px;">Sua conta foi criada com sucesso. Para ativá-la, confirme seu endereço de e-mail clicando no botão abaixo.</p>
+                <p style="margin:24px 0 0;color:#6c757d;font-size:13px;">Este link é válido por <strong>7 dias</strong>. Se você não confirmar dentro deste prazo, sua conta será removida automaticamente. Caso não tenha criado uma conta, ignore este e-mail.</p>
+                """.formatted(nome);
 
-                Sua conta foi criada com sucesso, mas ainda precisa de uma etapa final: a verificação do seu e-mail.
+        String html = construirHtml(
+                "Verifique seu e-mail",
+                "Só mais um passo para ativar sua conta",
+                corpo,
+                "Verificar e-mail",
+                link
+        );
 
-                Clique no link abaixo para ativar sua conta:
-                %s
-
-                Este link é válido por 7 dias. Caso você não confirme dentro deste prazo, sua conta será removida automaticamente e você precisará se cadastrar novamente.
-
-                Se você não criou uma conta no AuthLuiz, ignore este e-mail.
-                """.formatted(nome, link);
-
-        mensagem.setText(corpo);
-        criarMailSender(config).send(mensagem);
+        enviar(config, email, "Verifique seu e-mail - AuthLuiz", html);
     }
 
     @Async
     public void enviarConfirmacaoAlteracaoEmail(String nome, String novoEmail, String token) {
         ConfiguracaoAplicacao config = validarSetupEmail();
 
-        SimpleMailMessage mensagem = new SimpleMailMessage();
-        mensagem.setFrom(config.getMailFrom());
-        mensagem.setTo(novoEmail);
-        mensagem.setSubject("Confirme seu novo e-mail - AuthLuiz");
-
         String link = config.getFrontendBaseUrl() + "/verificar-email?token=" + token;
 
         String corpo = """
-                Olá, %s!
+                <p style="margin:0 0 12px;">Olá, <strong>%s</strong>!</p>
+                <p style="margin:0 0 24px;">Recebemos uma solicitação para alterar o e-mail da sua conta para este endereço. Clique no botão abaixo para confirmar a alteração.</p>
+                <p style="margin:24px 0 0;color:#6c757d;font-size:13px;">Este link expira em <strong>30 minutos</strong> e pode ser usado apenas uma vez. Se você não solicitou essa alteração, ignore este e-mail — seu e-mail atual permanecerá inalterado.</p>
+                """.formatted(nome);
 
-                Recebemos uma solicitação para alterar o e-mail da sua conta no AuthLuiz para este endereço.
+        String html = construirHtml(
+                "Confirme seu novo e-mail",
+                "Solicitação de alteração de e-mail",
+                corpo,
+                "Confirmar e-mail",
+                link
+        );
 
-                Clique no link abaixo para confirmar a alteração:
-                %s
-
-                Este link expira em 30 minutos e pode ser usado apenas uma vez.
-
-                Se você não solicitou essa alteração, ignore este e-mail. Seu e-mail atual permanecerá inalterado.
-                """.formatted(nome, link);
-
-        mensagem.setText(corpo);
-        criarMailSender(config).send(mensagem);
+        enviar(config, novoEmail, "Confirme seu novo e-mail - AuthLuiz", html);
     }
 
     @Async
     public void enviarRecuperacaoSenha(String nome, String email, String token) {
         ConfiguracaoAplicacao config = validarSetupEmail();
 
-        SimpleMailMessage mensagem = new SimpleMailMessage();
-        mensagem.setFrom(config.getMailFrom());
-        mensagem.setTo(email);
-        mensagem.setSubject("Recuperação de senha - AuthLuiz");
-
         String link = config.getFrontendBaseUrl() + "/redefinir-senha?token=" + token;
 
         String corpo = """
-                Olá, %s!
+                <p style="margin:0 0 12px;">Olá, <strong>%s</strong>!</p>
+                <p style="margin:0 0 24px;">Recebemos um pedido para redefinir a senha da sua conta. Clique no botão abaixo para cadastrar uma nova senha.</p>
+                <p style="margin:24px 0 0;color:#6c757d;font-size:13px;">Este link expira em <strong>30 minutos</strong> e pode ser usado apenas uma vez. Se você não solicitou essa alteração, ignore este e-mail.</p>
+                """.formatted(nome);
 
-                Recebemos um pedido para redefinir sua senha no AuthLuiz.
+        String html = construirHtml(
+                "Redefinição de senha",
+                "Recebemos sua solicitação",
+                corpo,
+                "Redefinir senha",
+                link
+        );
 
-                Use o link abaixo para cadastrar uma nova senha:
-                %s
+        enviar(config, email, "Recuperação de senha - AuthLuiz", html);
+    }
 
-                Este link expira em 30 minutos e pode ser usado apenas uma vez.
+    private String construirHtml(String titulo, String subtitulo, String corpoHtml,
+                                  String textoBtn, String linkBtn) {
+        String botao = (textoBtn != null && linkBtn != null)
+                ? """
+                  <div style="text-align:center;margin:28px 0;">
+                    <a href="%s" target="_blank"
+                       style="display:inline-block;padding:13px 32px;background-color:#0d6efd;color:#ffffff;
+                              text-decoration:none;border-radius:6px;font-size:15px;font-weight:600;">
+                      %s
+                    </a>
+                  </div>
+                  """.formatted(linkBtn, textoBtn)
+                : "";
 
-                Se você não solicitou essa alteração, ignore este e-mail.
-                """.formatted(nome, link);
+        return """
+                <!DOCTYPE html>
+                <html lang="pt-BR">
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+                </head>
+                <body style="margin:0;padding:0;background-color:#eef4ff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                  <table width="100%%" cellpadding="0" cellspacing="0" style="background-color:#eef4ff;padding:40px 16px;">
+                    <tr>
+                      <td align="center">
+                        <table width="100%%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
 
-        mensagem.setText(corpo);
-        criarMailSender(config).send(mensagem);
+                          <!-- Header -->
+                          <tr>
+                            <td style="background-color:#0d6efd;padding:28px 40px;text-align:center;">
+                              <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;letter-spacing:-0.5px;">AuthLuiz</h1>
+                            </td>
+                          </tr>
+
+                          <!-- Título e subtítulo -->
+                          <tr>
+                            <td style="padding:32px 40px 0;text-align:center;">
+                              <h2 style="margin:0 0 8px;color:#111827;font-size:20px;font-weight:700;">%s</h2>
+                              <p style="margin:0;color:#6c757d;font-size:14px;">%s</p>
+                            </td>
+                          </tr>
+
+                          <!-- Linha divisória -->
+                          <tr>
+                            <td style="padding:24px 40px 0;">
+                              <hr style="border:none;border-top:1px solid #e9ecef;margin:0;">
+                            </td>
+                          </tr>
+
+                          <!-- Corpo -->
+                          <tr>
+                            <td style="padding:24px 40px 0;color:#374151;font-size:15px;line-height:1.6;">
+                              %s
+                            </td>
+                          </tr>
+
+                          <!-- Botão CTA -->
+                          <tr>
+                            <td style="padding:0 40px;">
+                              %s
+                            </td>
+                          </tr>
+
+                          <!-- Footer -->
+                          <tr>
+                            <td style="padding:24px 40px 32px;">
+                              <hr style="border:none;border-top:1px solid #e9ecef;margin:0 0 20px;">
+                              <p style="margin:0;color:#adb5bd;font-size:12px;text-align:center;line-height:1.5;">
+                                Este é um e-mail automático. Por favor, não responda.<br>
+                              </p>
+                            </td>
+                          </tr>
+
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </body>
+                </html>
+                """.formatted(titulo, subtitulo, corpoHtml, botao);
+    }
+
+    private void enviar(ConfiguracaoAplicacao config, String destinatario, String assunto, String corpoHtml) {
+        try {
+            JavaMailSenderImpl mailSender = criarMailSender(config);
+            MimeMessage mensagem = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mensagem, "UTF-8");
+            helper.setFrom(config.getMailFrom());
+            helper.setTo(destinatario);
+            helper.setSubject(assunto);
+            helper.setText(corpoHtml, true);
+            mailSender.send(mensagem);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao enviar e-mail.", e);
+        }
     }
 
     private ConfiguracaoAplicacao validarSetupEmail() {

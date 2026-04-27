@@ -50,6 +50,7 @@
                 <h2 class="h5 mb-2">Resumo da conta</h2>
                 <p class="mb-1"><strong>{{ conta.nome }}</strong></p>
                 <p class="text-muted mb-0">{{ conta.email }}</p>
+                <p class="text-muted mb-0">{{ conta.telefone }}</p>
               </div>
 
               <div class="d-flex flex-wrap gap-2 align-content-start">

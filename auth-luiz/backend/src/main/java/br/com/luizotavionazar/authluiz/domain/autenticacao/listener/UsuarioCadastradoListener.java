@@ -19,11 +19,7 @@ public class UsuarioCadastradoListener {
     @TransactionalEventListener
     public void aoCadastrarUsuario(UsuarioCadastradoEvent event) {
         try {
-            if (event.tokenVerificacao() != null) {
-                emailService.enviarVerificacaoCadastro(event.nome(), event.email(), event.tokenVerificacao());
-            } else {
-                emailService.enviarBoasVindas(event.nome(), event.email());
-            }
+            emailService.enviarVerificacaoCadastro(event.nome(), event.email(), event.tokenVerificacao());
         } catch (Exception ex) {
             log.error("Falha ao enviar e-mail para {}", event.email(), ex);
         }

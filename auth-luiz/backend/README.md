@@ -69,7 +69,7 @@ src/main/java/.../authluiz/
 │   │   │   ├── ControleAlteracaoEmail   Rate limiting de alteração de e-mail por usuário
 │   │   │   └── PoliticaSenha            Regras de complexidade de senha
 │   │   ├── event/   UsuarioCadastradoEvent
-│   │   ├── listener/ UsuarioCadastradoListener — envia e-mail de boas-vindas ou verificação pós-commit
+│   │   ├── listener/ UsuarioCadastradoListener — envia e-mail de verificação de cadastro pós-commit
 │   │   ├── repository/  (JPA repositories para as entidades acima)
 │   │   ├── service/
 │   │   │   ├── AutenticacaoService      Cadastro e login local
@@ -100,7 +100,7 @@ src/main/java/.../authluiz/
 │   │
 │   ├── notificacao/
 │   │   └── service/
-│   │       └── EmailService             Envio de e-mails transacionais via JavaMail (todos os métodos são @Async)
+│   │       └── EmailService             Envio de e-mails transacionais HTML via JavaMail (todos os métodos são @Async)
 │   │
 │   └── usuario/
 │       ├── entity/   Usuario            UserDetails do Spring Security; campo providerOrigem

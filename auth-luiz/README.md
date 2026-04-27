@@ -11,7 +11,7 @@ API de autenticação pronta para reutilização, construída com Spring Boot e 
 - Login e vinculação de conta com Google (OAuth via Google Identity Services)
 - Confirmação de e-mail no cadastro e na alteração de e-mail
 - Recuperação e redefinição de senha por e-mail
-- Gerenciamento de conta autenticada: alterar nome, e-mail, senha
+- Gerenciamento de conta autenticada: alterar nome, e-mail, senha e telefone
 - Definição de senha para contas criadas via Google
 - Exclusão de conta
 - Setup inicial guiado para configuração de envio de e-mail (SMTP)
